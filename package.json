@@ -1,0 +1,15 @@
+{
+	"name": "1028test",
+	"version": "1.0.0",
+	"description": "Test",
+	"type": "module",
+	"main": "app.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "James McKee",
+	"license": "ISC",
+	"dependencies": {
+		"mongodb": "^4.3.0"
+	}
+}
