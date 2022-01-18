@@ -1,5 +1,4 @@
 import { createServer } from "http";
-import { parse } from "url";
 import { MongoClient } from "mongodb";
 
 /**
@@ -95,10 +94,7 @@ function tryParseUrl(urlStr) {
  */
 async function queryPhishtank(client, url) {
 	// Check if there is a matching hostname
-	let result = await client
-		.db("test_db")
-		.collection("phishtank")
-		.findOne({ hostname: url.hostname });
+	let result = await client.db("test_db").collection("phishtank").findOne({ hostname: url.hostname });
 
 	// If a result is found:
 	if (result) {
