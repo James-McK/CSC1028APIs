@@ -17,7 +17,7 @@ async function main() {
 		// TODO: Clear contents of database?
 
 		// Fetch data from phishtank and add it to the database
-		//await fetchPhishtank(client);
+		await fetchPhishtank(client);
 		// TODO: Other data sources
 	} catch (e) {
 		// Log any errors
@@ -36,14 +36,15 @@ async function main() {
 async function fetchPhishtank(client) {
 	// Read in the data from phishtank (Already given in JSON format)
 	let url = "http://data.phishtank.com/data/online-valid.json";
-	let phishtank = getRemoteJSON(url);
+	let phishtank = await Promise.resolve(getRemoteJSON(url));
 
 	//let phishtank = JSON.parse(readFileSync("phishtank.json", "utf8"));
 
 	// For each phish in the tank:
-	for (obj of phishtank) {
+	for (let phishIn of phishtank) {
+		console.log(typeof phishIn);
 		// Parse the URL
-		let phishUrl = new URL(obj.url);
+		let phishUrl = new URL(phishIn.url);
 
 		// For some URLs, the path matters!
 		// eg. not everything at sites.google.com is a phishing site, but sites.google.com/site/phishingsite is
@@ -59,11 +60,11 @@ async function fetchPhishtank(client) {
 			includesPath: hasPath,
 			pathname: phishUrl.pathname,
 			// Query and hash probably don't matter in this case
-			details_url: obj.phish_detail_url,
-			target: obj.target,
+			details_url: phishIn.phish_detail_url,
+			target: phishIn.target,
 		};
 
-		// Add the details to the phishtank container
+		// Add the details to the phishtank container - the phish tank tank
 		await createListing(client, phish, "phishtank");
 	}
 }
@@ -73,13 +74,11 @@ async function fetchPhishtank(client) {
  * @param {string} url The URL from which the JSON should be fetched
  * @returns {JSON} The parsed JSON to be used elsewhere
  */
-function getRemoteJSON(url) {
+async function getRemoteJSON(url) {
 	let settings = { method: "Get" };
-	fetch(url, settings)
-		.then((res) => res.json())
-		.then((json) => {
-			return json;
-		});
+	let res = await fetch(url, settings);
+	let json = await res.json();
+	return json;
 }
 
 /**
