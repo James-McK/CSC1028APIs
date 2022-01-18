@@ -51,14 +51,14 @@ async function createHttpServer(client) {
 				let p = tryParseUrl(queriedUrl);
 
 				// Query phishtank
-				// TODO: Should do something with the result of this query
-				await queryPhishtank(client, p);
+				let phishtankResult = await Promise.resolve(queryPhishtank(client, p));
 
 				// Prepare a response to the client
 				let response = {
 					protocol: p.protocol,
 					host: p.host,
 					pathname: p.pathname,
+					phishtank: phishtankResult,
 				};
 
 				// Write the respone to the client
@@ -89,9 +89,9 @@ function tryParseUrl(urlStr) {
 
 /**
  * Check if the given URL has a match in the phishtank database
- * TODO: Should actully return something, not just log to console
  * @param {MongoClient} client MongoClient with an open connection
  * @param {URL} url The URL to search for
+ * @returns {JSON} The result, if found
  */
 async function queryPhishtank(client, url) {
 	// Check if there is a matching hostname
@@ -105,11 +105,9 @@ async function queryPhishtank(client, url) {
 		// If the path does not need checked:
 		if (!result.includesPath) {
 			// Match found!
-			console.log(`Found domain match '${url.hostname}':`);
-			console.log(result);
+			return result;
 		} else {
 			// If the path does need checked:
-			console.log("Found domain match, however path must also be checked.");
 			// Check again if there is a matching hostname and pathname
 			result = await client
 				.db("test_db")
@@ -119,17 +117,16 @@ async function queryPhishtank(client, url) {
 			//If a result is found:
 			if (result) {
 				// Match found!
-				console.log(`Found exact match '${url.hostname}' and path '${url.pathname}':`);
-				console.log(result);
+				return result;
 			} else {
 				// If no result found:
 				// Might be safe, might be missing from database, might be false negative
-				console.log(`No listings found with the name '${url.hostname}' and path '${url.pathname}'`);
+				return null;
 			}
 		}
 	} else {
 		// If no result found:
-		console.log(`No listings found with the name '${url.hostname}' - Continue to next step`);
+		return null;
 	}
 }
 
