@@ -1,5 +1,6 @@
 import { MongoClient } from "mongodb";
 import { readFileSync } from "fs";
+import fetch from "node-fetch";
 
 /**
  * Main function
@@ -16,7 +17,7 @@ async function main() {
 		// TODO: Clear contents of database?
 
 		// Fetch data from phishtank and add it to the database
-		await fetchPhishtank(client);
+		//await fetchPhishtank(client);
 		// TODO: Other data sources
 	} catch (e) {
 		// Log any errors
@@ -34,7 +35,10 @@ async function main() {
  */
 async function fetchPhishtank(client) {
 	// Read in the data from phishtank (Already given in JSON format)
-	let phishtank = JSON.parse(readFileSync("phishtank.json", "utf8"));
+	let url = "http://data.phishtank.com/data/online-valid.json";
+	let phishtank = getRemoteJSON(url);
+
+	//let phishtank = JSON.parse(readFileSync("phishtank.json", "utf8"));
 
 	// For each phish in the tank:
 	for (obj of phishtank) {
@@ -65,25 +69,29 @@ async function fetchPhishtank(client) {
 }
 
 /**
+ * Fetch JSON from the given URL
+ * @param {string} url The URL from which the JSON should be fetched
+ * @returns {JSON} The parsed JSON to be used elsewhere
+ */
+function getRemoteJSON(url) {
+	let settings = { method: "Get" };
+	fetch(url, settings)
+		.then((res) => res.json())
+		.then((json) => {
+			return json;
+		});
+}
+
+/**
  * Add the given JSON to the database
  * @param {MongoClient} client MongoClient with an open connection
  * @param {JSON} newListing The new data to be added
  * @param {string} collection Name of the collection to add the data to
  * @param {string} dbName Name of the database to be added to
  */
-async function createListing(
-	client,
-	newListing,
-	collection,
-	dbName = "test_db"
-) {
-	const result = await client
-		.db(dbName)
-		.collection(collection)
-		.insertOne(newListing);
-	console.log(
-		`New listing created with the following id: ${result.insertedId}`
-	);
+async function createListing(client, newListing, collection, dbName = "test_db") {
+	const result = await client.db(dbName).collection(collection).insertOne(newListing);
+	console.log(`New listing created with the following id: ${result.insertedId}`);
 }
 
 // Run the main function.
