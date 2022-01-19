@@ -14,7 +14,7 @@ async function main() {
 		await client.connect();
 
 		// Fetch data from phishtank and add it to the database
-		//await fetchPhishtank(client);
+		await fetchPhishtank(client);
 		await fetchOpenPhish(client);
 		// TODO: Other data sources
 	} catch (e) {
@@ -35,7 +35,7 @@ async function fetchPhishtank(client) {
 		// Read in the data from phishtank (Already given in JSON format)
 		let url = "http://data.phishtank.com/data/online-valid.json";
 		let phishtank = await Promise.resolve(getRemoteJSON(url));
-
+		console.log("Fetched PhishTank data...");
 		//let phishtank = JSON.parse(readFileSync("phishtank.json", "utf8"));
 
 		await emptyCollection(client, "phishtank");
@@ -65,6 +65,8 @@ async function fetchPhishtank(client) {
 			// Add the details to the phishtank container - the phish tank tank
 			await createListing(client, phish, "phishtank");
 		}
+
+		console.log("Added " + phishtank.length + " items from PhishTank...");
 	} catch (e) {
 		//console.log(e);
 		console.log("Fetching phistank failed (Probably rate limited). Continuing...");
@@ -81,8 +83,8 @@ async function fetchOpenPhish(client) {
 		// Read in the data from phishtank (Already given in JSON format)
 		let url = "https://openphish.com/feed.txt";
 		let openPhishText = await Promise.resolve(getRemoteText(url));
+		console.log("Fetched OpenPhish data...");
 		let lines = openPhishText.split("\n");
-		console.log(lines);
 
 		await emptyCollection(client, "openphish");
 		// For each phish in the tank:
@@ -105,6 +107,8 @@ async function fetchOpenPhish(client) {
 			// Add the details to the phishtank container - the phish tank tank
 			await createListing(client, phish, "openphish");
 		}
+
+		console.log("Added " + lines.length + " items from OpenPhish...");
 	} catch (e) {
 		console.log("OpenPhish doesn't seem to be rate limited, so something has gone badly wrong.");
 		console.log(e);
@@ -144,8 +148,7 @@ async function getRemoteText(url) {
  * @param {string} dbName Name of the database the collection is in
  */
 async function createListing(client, newListing, collection, dbName = "test_db") {
-	const result = await client.db(dbName).collection(collection).insertOne(newListing);
-	console.log(`New listing created with the following id: ${result.insertedId}`);
+	await client.db(dbName).collection(collection).insertOne(newListing);
 }
 
 /**
