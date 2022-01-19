@@ -14,7 +14,8 @@ async function main() {
 		await client.connect();
 
 		// Fetch data from phishtank and add it to the database
-		await fetchPhishtank(client);
+		//await fetchPhishtank(client);
+		await fetchOpenPhish(client);
 		// TODO: Other data sources
 	} catch (e) {
 		// Log any errors
@@ -71,6 +72,47 @@ async function fetchPhishtank(client) {
 }
 
 /**
+ * Fetch data from OpenPhish (https://openphish.com/feed.txt) and add it to the database.
+ * TODO: Look into https://openphish.com/phishing_feeds.html - community version seems to be limited to 500?
+ * @param {MongoClient} client MongoClient with an open connection
+ */
+async function fetchOpenPhish(client) {
+	try {
+		// Read in the data from phishtank (Already given in JSON format)
+		let url = "https://openphish.com/feed.txt";
+		let openPhishText = await Promise.resolve(getRemoteText(url));
+		let lines = openPhishText.split("\n");
+		console.log(lines);
+
+		await emptyCollection(client, "openphish");
+		// For each phish in the tank:
+		for (let line of lines) {
+			if (!line) continue;
+			// Parse the URL
+			let phishUrl = new URL(line);
+
+			// Path still matters for OpenPhish data - a couple of the URLs were to backblaze and a link shortener
+			let hasPath = phishUrl.pathname.length > 1;
+
+			// I still haven't decided exactly what data I'm storing in the db yet, this is just a first guess.
+			// https://nodejs.org/api/url.html
+			let phish = {
+				hostname: phishUrl.hostname,
+				includesPath: hasPath,
+				pathname: phishUrl.pathname,
+			};
+
+			// Add the details to the phishtank container - the phish tank tank
+			await createListing(client, phish, "openphish");
+		}
+	} catch (e) {
+		console.log("OpenPhish doesn't seem to be rate limited, so something has gone badly wrong.");
+		console.log(e);
+		console.log("Continuing to next source anyway...");
+	}
+}
+
+/**
  * Fetch JSON from the given URL
  * @param {string} url The URL from which the JSON should be fetched
  * @returns {JSON} The parsed JSON to be used elsewhere
@@ -80,6 +122,18 @@ async function getRemoteJSON(url) {
 	let res = await fetch(url, settings);
 	let json = await res.json();
 	return json;
+}
+
+/**
+ * Fetch text from the given URL
+ * @param {string} url The URL from which the JSON should be fetched
+ * @returns {string} The string to be used elsewhere
+ */
+async function getRemoteText(url) {
+	let settings = { method: "Get" };
+	let res = await fetch(url, settings);
+	let text = await res.text();
+	return text;
 }
 
 /**
