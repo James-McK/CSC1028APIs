@@ -1,7 +1,5 @@
 import { MongoClient } from "mongodb";
-import { readFileSync } from "fs";
 import fetch from "node-fetch";
-import { Console } from "console";
 
 /**
  * Main function
