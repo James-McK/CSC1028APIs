@@ -51,6 +51,7 @@ async function createHttpServer(client) {
 
 				// Query phishtank
 				let phishtankResult = await Promise.resolve(queryPhishtank(client, p));
+				let openphishResult = await Promise.resolve(queryOpenPhish(client, p));
 
 				// Prepare a response to the client
 				let response = {
@@ -58,6 +59,7 @@ async function createHttpServer(client) {
 					host: p.host,
 					pathname: p.pathname,
 					phishtank: phishtankResult,
+					openphish: openphishResult,
 				};
 
 				// Write the respone to the client
@@ -93,8 +95,30 @@ function tryParseUrl(urlStr) {
  * @returns {JSON} The result, if found
  */
 async function queryPhishtank(client, url) {
+	return await Promise.resolve(queryCollection(client, url, "phishtank"));
+}
+
+/**
+ * Check if the given URL has a match in the OpenPhish database
+ * @param {MongoClient} client MongoClient with an open connection
+ * @param {URL} url The URL to search for
+ * @returns {JSON} The result, if found
+ */
+async function queryOpenPhish(client, url) {
+	return await Promise.resolve(queryCollection(client, url, "openphish"));
+}
+
+/**
+ * Check if the given URL has a match in the phishtank database
+ * @param {MongoClient} client MongoClient with an open connection
+ * @param {URL} url The URL to search for
+ * @param {string} collection The name of the collection to search through
+ * @param {string} dbName The name of the database the collection is contained in
+ * @returns {JSON} The result, if found
+ */
+async function queryCollection(client, url, collection, dbName = "test_db") {
 	// Check if there is a matching hostname
-	let result = await client.db("test_db").collection("phishtank").findOne({ hostname: url.hostname });
+	let result = await client.db(dbName).collection(collection).findOne({ hostname: url.hostname });
 
 	// If a result is found:
 	if (result) {
@@ -106,8 +130,8 @@ async function queryPhishtank(client, url) {
 			// If the path does need checked:
 			// Check again if there is a matching hostname and pathname
 			result = await client
-				.db("test_db")
-				.collection("phishtank")
+				.db(dbName)
+				.collection(collection)
 				.findOne({ hostname: url.hostname, pathname: url.pathname });
 
 			//If a result is found:
