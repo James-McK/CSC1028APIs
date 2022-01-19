@@ -43,7 +43,6 @@ async function fetchPhishtank(client) {
 		await emptyCollection(client, "phishtank");
 		// For each phish in the tank:
 		for (let phishIn of phishtank) {
-			console.log(typeof phishIn);
 			// Parse the URL
 			let phishUrl = new URL(phishIn.url);
 
