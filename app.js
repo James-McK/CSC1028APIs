@@ -35,7 +35,7 @@ async function createHttpServer(client) {
 			res.writeHead(200, {
 				// Send a HTTP 200 OK header,
 				"Content-Type": "application/json", // and tell the client the Content-Type is application/json
-				"X-Clacks-Overhead": "GNU Terry Pratchet", // GNU Terry Pratchett
+				"X-Clacks-Overhead": "GNU Terry Pratchett", // GNU Terry Pratchett
 			});
 
 			// Try to parse the request to get the queried URL

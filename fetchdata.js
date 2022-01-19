@@ -27,7 +27,6 @@ async function main() {
 
 /**
  * Fetch data from phishtank (http://data.phishtank.com/data/online-valid.json) and add it to the database.
- * TODO: data is currently only fetched from a local copy named phishtank.json!
  * @param {MongoClient} client MongoClient with an open connection
  */
 async function fetchPhishtank(client) {
