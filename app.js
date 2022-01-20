@@ -53,6 +53,7 @@ async function createHttpServer(client) {
 				let phishtankResult = await Promise.resolve(queryPhishtank(client, p));
 				let openphishResult = await Promise.resolve(queryOpenPhish(client, p));
 				let urlhausResult = await Promise.resolve(queryUrlhaus(client, p));
+				let malwareDiscovererResult = await Promise.resolve(queryMalwareDiscoverer(client, p));
 
 				// Prepare a response to the client
 				let response = {
@@ -62,6 +63,7 @@ async function createHttpServer(client) {
 					phishtank: phishtankResult,
 					openphish: openphishResult,
 					urlhaus: urlhausResult,
+					malwareDiscoverer: malwareDiscovererResult,
 				};
 
 				// Write the respone to the client
@@ -120,6 +122,15 @@ async function queryUrlhaus(client, url) {
 	return await Promise.resolve(queryCollection(client, url, "urlhaus"));
 }
 
+/**
+ * Check if the given URL has a match in the Malware Discoverer database
+ * @param {MongoClient} client MongoClient with an open connection
+ * @param {URL} url The URL to search for
+ * @returns {JSON} The result, if found
+ */
+async function queryMalwareDiscoverer(client, url) {
+	return await Promise.resolve(queryCollection(client, url, "malwarediscoverer"));
+}
 /**
  * Check if the given URL has a match in the phishtank database
  * @param {MongoClient} client MongoClient with an open connection
