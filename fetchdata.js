@@ -32,38 +32,28 @@ async function main() {
  */
 async function fetchPhishtank(client) {
 	try {
-		// Read in the data from phishtank (Already given in JSON format)
-		let url = "http://data.phishtank.com/data/online-valid.json";
-		let phishtank = await Promise.resolve(getRemoteJSON(url));
-		console.log("Fetched PhishTank data...");
-		//let phishtank = JSON.parse(readFileSync("phishtank.json", "utf8"));
+		const fetchUrl = "http://data.phishtank.com/data/online-valid.json";
+		const collectionName = "phishtank";
 
-		await emptyCollection(client, "phishtank");
+		// Read in the data from phishtank (Already given in JSON format)
+		let phishtank = await Promise.resolve(getRemoteJSON(fetchUrl));
+		console.log("Fetched PhishTank data...");
+
+		await emptyCollection(client, collectionName);
 		// For each phish in the tank:
 		for (let phishIn of phishtank) {
 			// Parse the URL
-			let phishUrl = new URL(phishIn.url);
-
-			// For some URLs, the path matters!
-			// eg. not everything at sites.google.com is a phishing site, but sites.google.com/site/phishingsite is
-			// However while the current approach has the advantage of no false positives, it will also result in some false negatives
-			// eg. phishingsite.tld will not be picked even though phishingsite.tld/en is in the database.
-			// Is manually picking out the sites that URL paths should be checked on an approach worth considering?
-			let hasPath = phishUrl.pathname.length > 1;
+			let url = new URL(phishIn.url);
 
 			// I still haven't decided exactly what data I'm storing in the db yet, this is just a first guess.
 			// https://nodejs.org/api/url.html
-			let phish = {
-				hostname: phishUrl.hostname,
-				includesPath: hasPath,
-				pathname: phishUrl.pathname,
-				// Query and hash probably don't matter in this case
+			let details = {
 				details_url: phishIn.phish_detail_url,
 				target: phishIn.target,
 			};
 
 			// Add the details to the phishtank container - the phish tank tank
-			await createListing(client, phish, "phishtank");
+			await addToDatabase(client, url.hostname, url.pathname, details, collectionName);
 		}
 
 		console.log("Added " + phishtank.length + " items from PhishTank...");
@@ -80,32 +70,23 @@ async function fetchPhishtank(client) {
  */
 async function fetchOpenPhish(client) {
 	try {
-		// Read in the data from phishtank (Already given in JSON format)
-		let url = "https://openphish.com/feed.txt";
-		let openPhishText = await Promise.resolve(getRemoteText(url));
-		console.log("Fetched OpenPhish data...");
-		let lines = openPhishText.split("\n");
+		const fetchUrl = "https://openphish.com/feed.txt";
+		const collectionName = "openphish";
 
-		await emptyCollection(client, "openphish");
+		// Read in the data from OpenPhish
+		let openphishText = await Promise.resolve(getRemoteText(fetchUrl));
+		console.log("Fetched OpenPhish data...");
+		let lines = openphishText.split("\n");
+
+		await emptyCollection(client, collectionName);
 		// For each phish in the tank:
 		for (let line of lines) {
 			if (!line) continue;
 			// Parse the URL
-			let phishUrl = new URL(line);
+			let url = new URL(line);
+			let details = null;
 
-			// Path still matters for OpenPhish data - a couple of the URLs were to backblaze and a link shortener
-			let hasPath = phishUrl.pathname.length > 1;
-
-			// I still haven't decided exactly what data I'm storing in the db yet, this is just a first guess.
-			// https://nodejs.org/api/url.html
-			let phish = {
-				hostname: phishUrl.hostname,
-				includesPath: hasPath,
-				pathname: phishUrl.pathname,
-			};
-
-			// Add the details to the phishtank container - the phish tank tank
-			await createListing(client, phish, "openphish");
+			await addToDatabase(client, url.hostname, url.pathname, details, collectionName);
 		}
 
 		console.log("Added " + lines.length + " items from OpenPhish...");
@@ -114,6 +95,33 @@ async function fetchOpenPhish(client) {
 		console.log(e);
 		console.log("Continuing to next source anyway...");
 	}
+}
+
+/**
+ * Add items to the database in a standardised way
+ * @param {MongoClient} client MongoClient with an open connection
+ * @param {string} hostname The hostname of the URL
+ * @param {string} pathname The pathname of the URL
+ * @param {JSON} details Any other details
+ * @param {string} collection Name of the collection to add the data to
+ * @param {string} dbName Name of the database the collection is in
+ */
+async function addToDatabase(client, hostname, pathname, details, collection, dbName = "test_db") {
+	// For some URLs, the path matters!
+	// eg. not everything at sites.google.com is a phishing site, but sites.google.com/site/phishingsite is
+	// However while the current approach has the advantage of no false positives, it will also result in some false negatives
+	// eg. phishingsite.tld will not be picked even though phishingsite.tld/example is in the database.
+	// Is manually picking out the sites that URL paths should be checked on an approach worth considering?
+	let hasPath = pathname.length < 3;
+
+	let item = {
+		hostname: hostname,
+		includesPath: hasPath,
+		pathname: pathname,
+		details: details,
+	};
+
+	await createListing(client, item, collection, dbName);
 }
 
 /**
