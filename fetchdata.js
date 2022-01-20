@@ -155,7 +155,7 @@ async function addToDatabase(client, hostname, pathname, details, collection, db
 	// However while the current approach has the advantage of no false positives, it will also result in some false negatives
 	// eg. phishingsite.tld will not be picked even though phishingsite.tld/example is in the database.
 	// Is manually picking out the sites that URL paths should be checked on an approach worth considering?
-	let hasPath = pathname.length < 3;
+	let hasPath = pathname.length > 3;
 
 	let item = {
 		hostname: hostname,
