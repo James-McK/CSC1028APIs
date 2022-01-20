@@ -52,6 +52,7 @@ async function createHttpServer(client) {
 				// Query phishtank
 				let phishtankResult = await Promise.resolve(queryPhishtank(client, p));
 				let openphishResult = await Promise.resolve(queryOpenPhish(client, p));
+				let urlhausResult = await Promise.resolve(queryUrlhaus(client, p));
 
 				// Prepare a response to the client
 				let response = {
@@ -60,6 +61,7 @@ async function createHttpServer(client) {
 					pathname: p.pathname,
 					phishtank: phishtankResult,
 					openphish: openphishResult,
+					urlhaus: urlhausResult,
 				};
 
 				// Write the respone to the client
@@ -106,6 +108,16 @@ async function queryPhishtank(client, url) {
  */
 async function queryOpenPhish(client, url) {
 	return await Promise.resolve(queryCollection(client, url, "openphish"));
+}
+
+/**
+ * Check if the given URL has a match in the URLHaus database
+ * @param {MongoClient} client MongoClient with an open connection
+ * @param {URL} url The URL to search for
+ * @returns {JSON} The result, if found
+ */
+async function queryUrlhaus(client, url) {
+	return await Promise.resolve(queryCollection(client, url, "urlhaus"));
 }
 
 /**
