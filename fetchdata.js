@@ -1,5 +1,6 @@
 import { MongoClient } from "mongodb";
 import fetch from "node-fetch";
+//import { readFileSync } from "fs";
 
 /**
  * Main function
@@ -16,6 +17,7 @@ async function main() {
 		// Fetch data from phishtank and add it to the database
 		await fetchPhishtank(client);
 		await fetchOpenPhish(client);
+		await fetchUrlHaus(client);
 		// TODO: Other data sources
 	} catch (e) {
 		// Log any errors
@@ -92,6 +94,47 @@ async function fetchOpenPhish(client) {
 		console.log("Added " + lines.length + " items from OpenPhish...");
 	} catch (e) {
 		console.log("OpenPhish doesn't seem to be rate limited, so something has gone badly wrong.");
+		console.log(e);
+		console.log("Continuing to next source anyway...");
+	}
+}
+
+/**
+ * Fetch data from UrlHaus (https://urlhaus.abuse.ch/downloads/csv_online/) and add it to the database.
+ * @param {MongoClient} client MongoClient with an open connection
+ */
+async function fetchUrlHaus(client) {
+	try {
+		const fetchUrl = "https://urlhaus.abuse.ch/downloads/csv_online/";
+		const collectionName = "urlhaus";
+
+		// Read in the data from URLHaus
+		let urlHausText = await Promise.resolve(getRemoteText(fetchUrl));
+
+		console.log("Fetched URLHaus data...");
+		let lines = urlHausText.split("\n");
+
+		await emptyCollection(client, collectionName);
+		// For each phish in the tank:
+		for (let line of lines) {
+			if (!line || line.charAt(0) === "#") continue;
+
+			let split = line.split('","');
+			// Parse the URL
+			let url = new URL(split[2]);
+
+			let details = {
+				details_url: split[6],
+				threat: split[4],
+				tags: split[5].split(","),
+			};
+
+			await addToDatabase(client, url.hostname, url.pathname, details, collectionName);
+		}
+
+		console.log("Added " + lines.length + " items from URLHaus...");
+	} catch (e) {
+		console.log("Encountered an error while updating URLHaus data:");
 		console.log(e);
 		console.log("Continuing to next source anyway...");
 	}
