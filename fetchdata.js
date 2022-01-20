@@ -18,6 +18,7 @@ async function main() {
 		await fetchPhishtank(client);
 		await fetchOpenPhish(client);
 		await fetchUrlHaus(client);
+		await fetchMalwareDiscoverer(client);
 		// TODO: Other data sources
 	} catch (e) {
 		// Log any errors
@@ -135,6 +136,44 @@ async function fetchUrlHaus(client) {
 		console.log("Added " + lines.length + " items from URLHaus...");
 	} catch (e) {
 		console.log("Encountered an error while updating URLHaus data:");
+		console.log(e);
+		console.log("Continuing to next source anyway...");
+	}
+}
+
+/**
+ * Fetch data from Malware Discoverer (https://github.com/zhouhanc/malware-discoverer) and add it to the database.
+ * @param {MongoClient} client MongoClient with an open connection
+ */
+async function fetchMalwareDiscoverer(client) {
+	try {
+		const fetchUrl = "https://raw.githubusercontent.com/zhouhanc/malware-discoverer/master/blocklist.csv";
+		const collectionName = "malwarediscoverer";
+
+		// Read in the data from Malware Discoverer
+		let malwareDiscovererText = await Promise.resolve(getRemoteText(fetchUrl));
+
+		console.log("Fetched Malware Discoverer data...");
+		let lines = malwareDiscovererText.split("\n");
+
+		await emptyCollection(client, collectionName);
+		// For each phish in the tank:
+		for (let i = 1; i < lines.length; i++) {
+			let line = lines[i];
+			if (!line || line.charAt(0) === "#") continue;
+
+			let split = line.split(",");
+			// Parse the URL
+			let url = new URL("http://" + split[0]);
+
+			let details = null;
+
+			await addToDatabase(client, url.hostname, url.pathname, details, collectionName);
+		}
+
+		console.log("Added " + lines.length + " items from Malware Discoverer...");
+	} catch (e) {
+		console.log("Encountered an error while updating Malware Discoverer data:");
 		console.log(e);
 		console.log("Continuing to next source anyway...");
 	}
