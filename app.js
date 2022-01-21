@@ -1,5 +1,6 @@
 import { createServer } from "http";
 import { MongoClient } from "mongodb";
+import fetch from "node-fetch";
 
 /**
  * Main function
@@ -31,6 +32,8 @@ async function main() {
 async function createHttpServer(client) {
 	// Create a server object
 	createServer(async function (req, res) {
+		const ipRegex =
+			/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/;
 		if (req.method === "GET") {
 			res.writeHead(200, {
 				// Send a HTTP 200 OK header,
@@ -49,6 +52,11 @@ async function createHttpServer(client) {
 				// Parse it from a string to a URL object
 				let p = tryParseUrl(queriedUrl);
 
+				let reverseDns = null;
+				if (ipRegex.test(p.hostname)) {
+					reverseDns = await Promise.resolve(fetchReverseDns(p));
+				}
+
 				// Query phishtank
 				let phishtankResult = await Promise.resolve(queryPhishtank(client, p));
 				let openphishResult = await Promise.resolve(queryOpenPhish(client, p));
@@ -64,6 +72,8 @@ async function createHttpServer(client) {
 					openphish: openphishResult,
 					urlhaus: urlhausResult,
 					malwareDiscoverer: malwareDiscovererResult,
+					subdomains: await Promise.resolve(fetchSubdomains(p)),
+					reverseDns: reverseDns,
 				};
 
 				// Write the respone to the client
@@ -76,6 +86,38 @@ async function createHttpServer(client) {
 			// I don't know what POST requests are yet, but given that browsers seem to use GET requests I'm ignoring POST for now.
 		}
 	}).listen(8080); // The server listens on port 8080
+}
+
+/**
+ * Fetch subdomains of the given URL
+ * @param {URL} url The URL to fetch information about
+ * @returns {JSON} The subdomains of the given URL host
+ */
+async function fetchSubdomains(url) {
+	const fetchUrl = "https://sonar.omnisint.io/subdomains/";
+	return await Promise.resolve(getRemoteJSON(fetchUrl + url.hostname));
+}
+
+/**
+ * Fetch the reverse DNS of the given IP
+ * @param {URL} url The URL to fetch information about
+ * @returns {JSON} The result of the query
+ */
+async function fetchReverseDns(url) {
+	const fetchUrl = "https://sonar.omnisint.io/reverse/";
+	return await Promise.resolve(getRemoteJSON(fetchUrl + url.hostname));
+}
+
+/**
+ * Fetch JSON from the given URL
+ * @param {string} url The URL from which the JSON should be fetched
+ * @returns {JSON} The parsed JSON to be used elsewhere
+ */
+async function getRemoteJSON(url) {
+	let settings = { method: "Get" };
+	let res = await fetch(url, settings);
+	let json = await res.json();
+	return json;
 }
 
 /**
