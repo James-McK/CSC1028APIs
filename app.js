@@ -1,6 +1,9 @@
 import { createServer } from "http";
 import { MongoClient } from "mongodb";
 import fetch from "node-fetch";
+import fs from "fs";
+import zlib from "zlib";
+import readline from "readline";
 
 /**
  * Main function
@@ -42,19 +45,45 @@ async function createHttpServer(client) {
 			});
 
 			// Try to parse the request to get the queried URL
+			let reqFullUrl;
 			let queriedUrl;
 			try {
-				queriedUrl = new URL(req.url, `http://${req.headers.host}`).searchParams.get("url");
+				reqFullUrl = new URL(req.url, `http://${req.headers.host}`);
+				queriedUrl = reqFullUrl.searchParams.get("url");
 			} catch {}
 
 			// If any sort of queried url was given:
 			if (queriedUrl) {
+				let isFullDetails = false;
+				try {
+					isFullDetails = reqFullUrl.searchParams.get("fullDetails");
+				} catch {}
+
 				// Parse it from a string to a URL object
 				let p = tryParseUrl(queriedUrl);
 
 				let reverseDns = null;
 				if (ipRegex.test(p.hostname)) {
 					reverseDns = await Promise.resolve(fetchReverseDns(p));
+				}
+
+				if (isFullDetails) {
+					const sonarDataLocation = "C:\\Users\\James\\Downloads\\fdns_a.json.gz";
+					let lineReader = readline.createInterface({
+						input: fs.createReadStream(sonarDataLocation).pipe(zlib.createGunzip()),
+					});
+
+					let n = 0;
+					lineReader.on("line", (sonarLine) => {
+						n += 1;
+
+						let sonarLineJson = JSON.parse(sonarLine);
+						if (n % 1000000 === 0) console.log(n);
+						if (sonarLineJson.name === p.hostname || sonarLineJson.name.endsWith("." + p.hostname)) {
+							console.log(sonarLineJson);
+							res.write(JSON.stringify(sonarLineJson));
+						}
+					});
 				}
 
 				// Query phishtank
