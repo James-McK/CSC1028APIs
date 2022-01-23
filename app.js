@@ -68,6 +68,9 @@ async function createHttpServer(client) {
 				}
 
 				if (isFullDetails) {
+					// queryProjectSonar(client, p);
+
+					//let arr = [];
 					const sonarDataLocation = "C:\\Users\\James\\Downloads\\fdns_a.json.gz";
 					let lineReader = readline.createInterface({
 						input: fs.createReadStream(sonarDataLocation).pipe(zlib.createGunzip()),
@@ -76,12 +79,16 @@ async function createHttpServer(client) {
 					let n = 0;
 					lineReader.on("line", (sonarLine) => {
 						n += 1;
-
 						let sonarLineJson = JSON.parse(sonarLine);
-						if (n % 1000000 === 0) console.log(n);
+						//arr.push(sonarLineJson);
+						if (n % 1000000 === 0) {
+							console.log(n);
+							//console.log(arr);
+							//createManyListings(client, arr, "projectsonar");
+							//arr = [];
+						}
 						if (sonarLineJson.name === p.hostname || sonarLineJson.name.endsWith("." + p.hostname)) {
 							console.log(sonarLineJson);
-							res.write(JSON.stringify(sonarLineJson));
 						}
 					});
 				}
@@ -115,6 +122,29 @@ async function createHttpServer(client) {
 			// I don't know what POST requests are yet, but given that browsers seem to use GET requests I'm ignoring POST for now.
 		}
 	}).listen(8080); // The server listens on port 8080
+}
+
+/**
+ * Check if the given hostname has a match in the Project Sonar data
+ * @param {MongoClient} client MongoClient with an open connection
+ * @param {URL} url The URL to search for
+ */
+async function queryProjectSonar(client, url) {
+	console.log("here");
+	let result = await client.db("test_db").collection("projectsonar").findOne({ name: url.hostname });
+	console.log(result);
+	console.log("here 2");
+}
+
+/**
+ * Add the given JSON to the database
+ * @param {MongoClient} client MongoClient with an open connection
+ * @param {JSON[]} newListing The new data to be added
+ * @param {string} collection Name of the collection to add the data to
+ * @param {string} dbName Name of the database the collection is in
+ */
+async function createManyListings(client, newListing, collection, dbName = "test_db") {
+	client.db(dbName).collection(collection).insertMany(newListing);
 }
 
 /**
@@ -202,6 +232,7 @@ async function queryUrlhaus(client, url) {
 async function queryMalwareDiscoverer(client, url) {
 	return await Promise.resolve(queryCollection(client, url, "malwarediscoverer"));
 }
+
 /**
  * Check if the given URL has a match in the phishtank database
  * @param {MongoClient} client MongoClient with an open connection
