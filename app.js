@@ -93,6 +93,11 @@ async function createHttpServer(client) {
 					});
 				}
 
+				let geolocation = null;
+				if (ipRegex.test(p.hostname)) {
+					geolocation = await Promise.resolve(fetchGeolocation(p));
+				}
+
 				// Query phishtank
 				let phishtankResult = await Promise.resolve(queryPhishtank(client, p));
 				let openphishResult = await Promise.resolve(queryOpenPhish(client, p));
@@ -110,6 +115,7 @@ async function createHttpServer(client) {
 					malwareDiscoverer: malwareDiscovererResult,
 					subdomains: await Promise.resolve(fetchSubdomains(p)),
 					reverseDns: reverseDns,
+					geolocation: geolocation,
 				};
 
 				// Write the respone to the client
@@ -145,6 +151,16 @@ async function queryProjectSonar(client, url) {
  */
 async function createManyListings(client, newListing, collection, dbName = "test_db") {
 	client.db(dbName).collection(collection).insertMany(newListing);
+}
+
+/**
+ * Fetch geolocation information about the given IP
+ * @param {URL} url The URL to fetch information about
+ * @returns {JSON} The geolocation information on the given IP
+ */
+async function fetchGeolocation(url) {
+	const fetchUrl = "http://ip-api.com/json/";
+	return await Promise.resolve(getRemoteJSON(fetchUrl + url.hostname));
 }
 
 /**
