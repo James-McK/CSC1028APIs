@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 import fs from "fs";
 import zlib from "zlib";
 import readline from "readline";
+import "dotenv/config";
 
 /**
  * Main function
@@ -33,6 +34,7 @@ async function main() {
  * @param {MongoClient} client MongoClient with an open connection
  */
 async function createHttpServer(client) {
+	console.log(await Promise.resolve(canQuerySimilarweb()));
 	// Create a server object
 	createServer(async function (req, res) {
 		const ipRegex =
@@ -151,6 +153,16 @@ async function queryProjectSonar(client, url) {
  */
 async function createManyListings(client, newListing, collection, dbName = "test_db") {
 	client.db(dbName).collection(collection).insertMany(newListing);
+}
+
+/**
+ * Fetch if similarweb can still be queried
+ * @returns {boolean} The result of the query
+ */
+async function canQuerySimilarweb() {
+	const fetchUrl = "https://api.similarweb.com/user-capabilities?api_key=";
+	let res = await Promise.resolve(getRemoteJSON(fetchUrl + process.env.SIMILARWEB_KEY));
+	return res.user_remaining > 10;
 }
 
 /**
