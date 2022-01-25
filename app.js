@@ -34,10 +34,11 @@ async function main() {
  * @param {MongoClient} client MongoClient with an open connection
  */
 async function createHttpServer(client) {
+	const ipRegex =
+		/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/;
+
 	// Create a server object
 	createServer(async function (req, res) {
-		const ipRegex =
-			/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/;
 		if (req.method === "GET") {
 			res.writeHead(200, {
 				// Send a HTTP 200 OK header,
@@ -45,30 +46,19 @@ async function createHttpServer(client) {
 				"X-Clacks-Overhead": "GNU Terry Pratchett", // GNU Terry Pratchett
 			});
 
-			// Try to parse the request to get the queried URL
-			let reqFullUrl;
-			let queriedUrl;
-			try {
-				reqFullUrl = new URL(req.url, `http://${req.headers.host}`);
-				queriedUrl = reqFullUrl.searchParams.get("url");
-			} catch {}
+			const reqDetails = parseUserQuery(req);
 
 			// If any sort of queried url was given:
-			if (queriedUrl) {
-				let isFullDetails = false;
-				try {
-					isFullDetails = reqFullUrl.searchParams.get("fullDetails");
-				} catch {}
-
+			if (reqDetails) {
 				// Parse it from a string to a URL object
-				let p = tryParseUrl(queriedUrl);
+				let p = tryParseUrl(reqDetails.queriedUrl);
 
 				let reverseDns = null;
 				if (ipRegex.test(p.hostname)) {
 					reverseDns = await Promise.resolve(fetchReverseDns(p));
 				}
 
-				if (isFullDetails) {
+				if (reqDetails.isFullDetails) {
 					// queryProjectSonar(client, p);
 
 					//let arr = [];
@@ -99,23 +89,17 @@ async function createHttpServer(client) {
 					geolocation = await Promise.resolve(fetchGeolocation(p));
 				}
 
-				let similarwebRank = await Promise.resolve(fetchSimilarwebRank(p));
+				const similarwebRank = await Promise.resolve(fetchSimilarwebRank(p));
+
+				let phishingResults = await Promise.resolve(queryPhishingDB(client, p));
 
 				// Query phishtank
-				let phishtankResult = await Promise.resolve(queryPhishtank(client, p));
-				let openphishResult = await Promise.resolve(queryOpenPhish(client, p));
-				let urlhausResult = await Promise.resolve(queryUrlhaus(client, p));
-				let malwareDiscovererResult = await Promise.resolve(queryMalwareDiscoverer(client, p));
 
 				// Prepare a response to the client
 				let response = {
-					protocol: p.protocol,
 					host: p.host,
 					pathname: p.pathname,
-					phishtank: phishtankResult,
-					openphish: openphishResult,
-					urlhaus: urlhausResult,
-					malwareDiscoverer: malwareDiscovererResult,
+					phishingData: phishingResults,
 					subdomains: await Promise.resolve(fetchSubdomains(p)),
 					reverseDns: reverseDns,
 					geolocation: geolocation,
@@ -132,6 +116,45 @@ async function createHttpServer(client) {
 			// I don't know what POST requests are yet, but given that browsers seem to use GET requests I'm ignoring POST for now.
 		}
 	}).listen(8080); // The server listens on port 8080
+}
+
+function parseUserQuery(req) {
+	// Try to parse the request to get the queried URL
+	let reqFullUrl;
+	let queriedUrl;
+	try {
+		reqFullUrl = new URL(req.url, `http://${req.headers.host}`);
+		queriedUrl = reqFullUrl.searchParams.get("url");
+
+		let isFullDetails = false;
+		try {
+			isFullDetails = reqFullUrl.searchParams.get("fullDetails");
+		} catch {}
+
+		return {
+			queriedUrl: queriedUrl,
+			isFullDetails: isFullDetails,
+		};
+	} catch {
+		return null;
+	}
+}
+
+async function queryPhishingDB(client, p) {
+	let results = [
+		await Promise.resolve(queryPhishtank(client, p)),
+		await Promise.resolve(queryOpenPhish(client, p)),
+		await Promise.resolve(queryUrlhaus(client, p)),
+		await Promise.resolve(queryMalwareDiscoverer(client, p)),
+	];
+
+	let toReturn = [];
+
+	for (let i = 0; i < results.length; i++) {
+		if (results[i]) toReturn.push(results[i]);
+	}
+
+	return toReturn;
 }
 
 /**
