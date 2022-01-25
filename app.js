@@ -56,14 +56,20 @@ async function createHttpServer(client) {
 
 				let ip;
 				let reverseDns;
+
+				// If hostname is already an IP address (TODO: Only supports IPv4)
 				if (ipRegex.test(p.hostname)) {
-					ip = p.hostname;
-					reverseDns = await Promise.resolve(fetchReverseDns(p));
+					// Fetch the results of the reverse DNS
+					ip = { address: p.hostname, family: 4 };
+					reverseDns = await Promise.resolve(fetchReverseDns(ip.address));
 				} else {
+					// Find an IP address the hostname points to
 					ip = await Promise.resolve(dnsLookup(p.hostname));
-					reverseDns = null;
+					// I don't know if it makes sense to call reverse dns here but I'm doing it anyway
+					reverseDns = await Promise.resolve(fetchReverseDns(ip.address));
 				}
 
+				// Project Sonar data
 				if (reqDetails.isFullDetails) {
 					// queryProjectSonar(client, p);
 
@@ -90,13 +96,14 @@ async function createHttpServer(client) {
 					});
 				}
 
+				// Location where the server is hosted
 				let geolocation = await Promise.resolve(fetchGeolocation(ip.address));
 
+				// SimilarWeb Rank
 				const similarwebRank = await Promise.resolve(fetchSimilarwebRank(p));
 
+				// Could the URL contain malware/phishing attack?
 				let phishingResults = await Promise.resolve(queryPhishingDB(client, p));
-
-				// Query phishtank
 
 				// Prepare a response to the client
 				let response = {
@@ -121,7 +128,11 @@ async function createHttpServer(client) {
 		}
 	}).listen(8080); // The server listens on port 8080
 }
-
+/**
+ * Get the user's request
+ * @param {IncomingMessage} req The user's request to the server
+ * @returns The details of the user's query if given, else null
+ */
 function parseUserQuery(req) {
 	// Try to parse the request to get the queried URL
 	let reqFullUrl;
@@ -144,6 +155,11 @@ function parseUserQuery(req) {
 	}
 }
 
+/**
+ * Find the result of DNS for the given hostname
+ * @param {string} hostname The hostname
+ * @returns A promise containing the results of the DNS lookup
+ */
 function dnsLookup(hostname) {
 	return new Promise(function (resolve, reject) {
 		lookup(hostname, (err, address, family) => {
@@ -159,16 +175,22 @@ function dnsLookup(hostname) {
 	});
 }
 
-async function queryPhishingDB(client, p) {
+/**
+ * Check if the given URL is contained in a phishing database
+ * @param {MongoClient} client MongoClient with an open connection
+ * @param {URL} url The URL to search for
+ * @returns The result of the given queries
+ */
+async function queryPhishingDB(client, url) {
 	let results = [
-		await Promise.resolve(queryPhishtank(client, p)),
-		await Promise.resolve(queryOpenPhish(client, p)),
-		await Promise.resolve(queryUrlhaus(client, p)),
-		await Promise.resolve(queryMalwareDiscoverer(client, p)),
+		await Promise.resolve(queryPhishtank(client, url)),
+		await Promise.resolve(queryOpenPhish(client, url)),
+		await Promise.resolve(queryUrlhaus(client, url)),
+		await Promise.resolve(queryMalwareDiscoverer(client, url)),
 	];
 
+	// Only return results that exist
 	let toReturn = [];
-
 	for (let i = 0; i < results.length; i++) {
 		if (results[i]) toReturn.push(results[i]);
 	}
@@ -248,9 +270,9 @@ async function fetchSubdomains(url) {
  * @param {URL} url The URL to fetch information about
  * @returns {JSON} The result of the query
  */
-async function fetchReverseDns(url) {
+async function fetchReverseDns(ipAddress) {
 	const fetchUrl = "https://sonar.omnisint.io/reverse/";
-	return await Promise.resolve(getRemoteJSON(fetchUrl + url.hostname));
+	return await Promise.resolve(getRemoteJSON(fetchUrl + ipAddress));
 }
 
 /**
