@@ -5,6 +5,7 @@ import fs from "fs";
 import zlib from "zlib";
 import readline from "readline";
 import "dotenv/config";
+import { lookup } from "dns";
 
 /**
  * Main function
@@ -53,9 +54,14 @@ async function createHttpServer(client) {
 				// Parse it from a string to a URL object
 				let p = tryParseUrl(reqDetails.queriedUrl);
 
-				let reverseDns = null;
+				let ip;
+				let reverseDns;
 				if (ipRegex.test(p.hostname)) {
+					ip = p.hostname;
 					reverseDns = await Promise.resolve(fetchReverseDns(p));
+				} else {
+					ip = await Promise.resolve(dnsLookup(p.hostname));
+					reverseDns = null;
 				}
 
 				if (reqDetails.isFullDetails) {
@@ -84,10 +90,7 @@ async function createHttpServer(client) {
 					});
 				}
 
-				let geolocation = null;
-				if (ipRegex.test(p.hostname)) {
-					geolocation = await Promise.resolve(fetchGeolocation(p));
-				}
+				let geolocation = await Promise.resolve(fetchGeolocation(ip.address));
 
 				const similarwebRank = await Promise.resolve(fetchSimilarwebRank(p));
 
@@ -99,6 +102,7 @@ async function createHttpServer(client) {
 				let response = {
 					host: p.host,
 					pathname: p.pathname,
+					ip: ip,
 					phishingData: phishingResults,
 					subdomains: await Promise.resolve(fetchSubdomains(p)),
 					reverseDns: reverseDns,
@@ -138,6 +142,21 @@ function parseUserQuery(req) {
 	} catch {
 		return null;
 	}
+}
+
+function dnsLookup(hostname) {
+	return new Promise(function (resolve, reject) {
+		lookup(hostname, (err, address, family) => {
+			if (err) {
+				console.err(err);
+				resolve(null);
+			} else
+				resolve({
+					address: address,
+					family: family,
+				});
+		});
+	});
 }
 
 async function queryPhishingDB(client, p) {
@@ -209,9 +228,9 @@ async function fetchSimilarwebRank(url) {
  * @param {URL} url The URL to fetch information about
  * @returns {JSON} The geolocation information on the given IP
  */
-async function fetchGeolocation(url) {
+async function fetchGeolocation(ipAddr) {
 	const fetchUrl = "http://ip-api.com/json/";
-	return await Promise.resolve(getRemoteJSON(fetchUrl + url.hostname));
+	return await Promise.resolve(getRemoteJSON(fetchUrl + ipAddr));
 }
 
 /**
