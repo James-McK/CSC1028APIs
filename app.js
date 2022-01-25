@@ -34,7 +34,6 @@ async function main() {
  * @param {MongoClient} client MongoClient with an open connection
  */
 async function createHttpServer(client) {
-	console.log(await Promise.resolve(canQuerySimilarweb()));
 	// Create a server object
 	createServer(async function (req, res) {
 		const ipRegex =
@@ -100,6 +99,8 @@ async function createHttpServer(client) {
 					geolocation = await Promise.resolve(fetchGeolocation(p));
 				}
 
+				let similarwebRank = await Promise.resolve(fetchSimilarwebRank(p));
+
 				// Query phishtank
 				let phishtankResult = await Promise.resolve(queryPhishtank(client, p));
 				let openphishResult = await Promise.resolve(queryOpenPhish(client, p));
@@ -118,6 +119,7 @@ async function createHttpServer(client) {
 					subdomains: await Promise.resolve(fetchSubdomains(p)),
 					reverseDns: reverseDns,
 					geolocation: geolocation,
+					similarwebRank: similarwebRank,
 				};
 
 				// Write the respone to the client
@@ -138,10 +140,8 @@ async function createHttpServer(client) {
  * @param {URL} url The URL to search for
  */
 async function queryProjectSonar(client, url) {
-	console.log("here");
 	let result = await client.db("test_db").collection("projectsonar").findOne({ name: url.hostname });
 	console.log(result);
-	console.log("here 2");
 }
 
 /**
@@ -162,7 +162,23 @@ async function createManyListings(client, newListing, collection, dbName = "test
 async function canQuerySimilarweb() {
 	const fetchUrl = "https://api.similarweb.com/user-capabilities?api_key=";
 	let res = await Promise.resolve(getRemoteJSON(fetchUrl + process.env.SIMILARWEB_KEY));
+	console.log("Similarweb queries remaining: " + res.user_remaining);
 	return res.user_remaining > 10;
+}
+
+/**
+ * The SimilarWeb rank of the given URL
+ * @param {URL} url The URL to fetch information about
+ * @returns {int} The website's rank, if found, or null if it cannot be found.
+ */
+async function fetchSimilarwebRank(url) {
+	if (await Promise.resolve(canQuerySimilarweb())) {
+		const fetchUrl = "https://api.similarweb.com/v1/similar-rank/" + url.hostname + "/rank?api_key=";
+		let res = await Promise.resolve(getRemoteJSON(fetchUrl + process.env.SIMILARWEB_KEY));
+
+		if (res.meta.status === "Error") return null;
+		else return res.similar_rank.rank;
+	} else return null;
 }
 
 /**
