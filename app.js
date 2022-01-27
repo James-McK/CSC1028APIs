@@ -161,7 +161,7 @@ function parseUserQuery(req) {
  * @returns A promise containing the results of the DNS lookup
  */
 function dnsLookup(hostname) {
-	return new Promise(function (resolve, reject) {
+	return new Promise(function (resolve) {
 		lookup(hostname, (err, address, family) => {
 			if (err) {
 				console.err(err);
