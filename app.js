@@ -342,7 +342,7 @@ async function queryMalwareDiscoverer(client, url) {
 }
 
 /**
- * Check if the given URL has a match in the phishtank database
+ * Check if the given URL has a match in the given database's collection
  * @param {MongoClient} client MongoClient with an open connection
  * @param {URL} url The URL to search for
  * @param {string} collection The name of the collection to search through
