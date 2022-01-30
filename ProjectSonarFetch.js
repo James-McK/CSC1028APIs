@@ -19,7 +19,12 @@ async function main() {
 		// Connect to the MongoDB cluster
 		await client.connect();
 
-		//client.db("test_db").collection("sonartest").createIndex( { })
+		// Drop the collection containg Project Sonar data
+		try {
+			await dropCollection(client, "test");
+		} catch {}
+
+		await client.db("test_db").collection("test").createIndex({ domainWithoutSuffix: "text" });
 
 		// Project Sonar data
 		await readFromFile(client);
@@ -87,6 +92,10 @@ async function parseSonar(client, input) {
 			}
 		}
 	});
+}
+
+async function dropCollection(client, collection, dbName = "test_db") {
+	client.db(dbName).collection(collection).drop();
 }
 
 /**
