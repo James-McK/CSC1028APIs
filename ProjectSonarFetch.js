@@ -13,8 +13,6 @@ async function main() {
 	const uri = "mongodb://localhost:27017";
 	const client = new MongoClient(uri);
 
-	//const
-
 	try {
 		// Connect to the MongoDB cluster
 		await client.connect();
@@ -27,11 +25,10 @@ async function main() {
 		await client.db("test_db").collection("test").createIndex({ domainWithoutSuffix: "text" });
 
 		// Project Sonar data
-		await readFromFile(client);
+		//await readFromFile(client);
 
-		//const url = "https://opendata.rapid7.com/sonar.fdns_v2/2021-12-01-1638317387-fdns_txt_mx_dmarc.json.gz";
-		const url = "https://opendata.rapid7.com/sonar.fdns_v2/2021-12-31-1640909088-fdns_a.json.gz";
-		//await readFromWeb(client, url, parseSonar);
+		const url = "https://opendata.rapid7.com/sonar.fdns_v2/2022-01-28-1643328400-fdns_a.json.gz";
+		await readFromWeb(client, url, parseSonar);
 	} catch (e) {
 		// Log any errors
 		console.error(e);
@@ -56,12 +53,12 @@ async function readFromWeb(client, url, parseMethod) {
 	});
 }
 
-async function parseSonar(client, input) {
+async function parseSonar(client, readstream) {
 	// Pipe the response into gunzip to decompress
-	var gunzip = zlib.createGunzip();
+	let gunzip = zlib.createGunzip();
 
 	let lineReader = readline.createInterface({
-		input: input.pipe(gunzip),
+		input: readstream.pipe(gunzip),
 	});
 
 	let arr = [];
@@ -69,6 +66,7 @@ async function parseSonar(client, input) {
 	let failed = 0;
 	lineReader.on("line", (line) => {
 		let lineJson = JSON.parse(line);
+		//console.log(lineJson);
 		if (lineJson.name.substring(0, 2) === "*.") lineJson.name = lineJson.name.substring(2);
 		let tldParsed = tldtsParse(lineJson.name);
 
@@ -85,7 +83,7 @@ async function parseSonar(client, input) {
 				type: lineJson.type,
 				value: lineJson.value,
 			});
-			if (n % 1000000 === 0) {
+			if (n % 100000 === 0) {
 				console.log(`${n} lines parsed`);
 				createManyListings(client, arr, "test");
 				arr = [];
@@ -106,7 +104,7 @@ async function dropCollection(client, collection, dbName = "test_db") {
  * @param {string} dbName Name of the database the collection is in
  */
 async function createManyListings(client, newListing, collection, dbName = "test_db") {
-	client.db(dbName).collection(collection).insertMany(newListing);
+	client.db(dbName).collection(collection).insertMany(newListing, { ordered: false });
 }
 
 async function readFromFile(client) {
