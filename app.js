@@ -53,6 +53,7 @@ async function createHttpServer(client) {
 			if (reqDetails) {
 				// Parse it from a string to a URL object
 				let p = tryParseUrl(reqDetails.queriedUrl);
+				console.log(`Queried: ${p}`);
 
 				let ip;
 				let reverseDns;
@@ -105,6 +106,8 @@ async function createHttpServer(client) {
 				// Could the URL contain malware/phishing attack?
 				let phishingResults = await Promise.resolve(queryPhishingDB(client, p));
 
+				let archiveDate = await Promise.resolve(getEarliestArchiveDate(p));
+
 				// Prepare a response to the client
 				let response = {
 					host: p.host,
@@ -115,6 +118,7 @@ async function createHttpServer(client) {
 					reverseDns: reverseDns,
 					geolocation: geolocation,
 					similarwebRank: similarwebRank,
+					archiveDate: archiveDate,
 				};
 
 				// Write the respone to the client
@@ -217,6 +221,19 @@ async function queryProjectSonar(client, url) {
  */
 async function createManyListings(client, newListing, collection, dbName = "test_db") {
 	client.db(dbName).collection(collection).insertMany(newListing);
+}
+
+/**
+ * @param {URL} url The URL to fetch information about
+ * @returns {JSON} The subdomains of the given URL host
+ */
+async function getEarliestArchiveDate(url) {
+	const fetchUrl = "https://archive.org/wayback/available?timestamp=0&url=";
+	let res = await Promise.resolve(getRemoteJSON(fetchUrl + url.hostname));
+	if (res.archived_snapshots) {
+		let timestamp = res.archived_snapshots.closest.timestamp;
+		return new Date(timestamp.substring(0, 4), timestamp.substring(4, 6) - 1, timestamp.substring(6, 8));
+	} else return null;
 }
 
 /**

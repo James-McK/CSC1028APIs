@@ -12,8 +12,8 @@ async function main() {
 		// Connect to the MongoDB cluster
 		await client.connect();
 
-		let query = { $text: { $search: "qub" } };
-		await findMany(client, query, "test");
+		let query = { $text: { $search: "rapid7" }, domainWithoutSuffix: "rapid7" };
+		await findMany(client, query, "sonardata");
 	} catch (e) {
 		// Log any errors
 		console.error(e);
@@ -22,7 +22,7 @@ async function main() {
 	}
 }
 
-async function findMany(client, query, collection, db_name = "test_db", maxResults = 100) {
+async function findMany(client, query, collection, db_name = "test_db", maxResults = 1000) {
 	const cursor = client.db(db_name).collection(collection).find(query).limit(maxResults);
 
 	const results = await cursor.toArray();
@@ -33,7 +33,7 @@ async function findMany(client, query, collection, db_name = "test_db", maxResul
 			console.log(result);
 		});
 	} else {
-		console.log("No listings found with the given query!");
+		console.log("No results found with the given query!");
 	}
 }
 
