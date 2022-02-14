@@ -24,8 +24,8 @@ async function main() {
 
 		await client.db("test_db").collection("sonardata").createIndex({ domainWithoutSuffix: "text" });
 
-		const dataUrl = "https://opendata.rapid7.com/sonar.fdns_v2/2022-01-28-1643328400-fdns_a.json.gz";
-		readFromWeb(client, dataUrl);
+		//const dataUrl = "https://opendata.rapid7.com/sonar.fdns_v2/2022-01-28-1643328400-fdns_a.json.gz";
+		readFromFile(client);
 	} catch (e) {
 		console.error(e);
 	}
@@ -78,7 +78,7 @@ async function createManyListings(client, newListing, collection, dbName = "test
 }
 
 async function readFromFile(client) {
-	const sonarDataLocation = "fdns_a.json.gz";
+	const sonarDataLocation = "/home/jamesm/Downloads/fdns_a.json.gz";
 	let stream = fs.createReadStream(sonarDataLocation);
 	parseSonar(client, stream);
 }
