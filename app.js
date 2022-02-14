@@ -15,8 +15,6 @@ const client = new MongoClient(uri);
  * Main function
  */
 async function main() {
-	// Database is currently hosted on same machine
-
 	try {
 		// Connect to the MongoDB cluster
 		await client.connect();
@@ -60,28 +58,17 @@ async function mainQueryCallback(searchParams) {
 			reverseDns = await Promise.resolve(fetchReverseDns(ip.address));
 		}
 
-		// Location where the server is hosted
-		let geolocation = await Promise.resolve(fetchGeolocation(ip.address));
-
-		// SimilarWeb Rank
-		let similarwebRank = await Promise.resolve(fetchSimilarwebRank(url));
-
-		// Could the URL contain malware/phishing attack?
-		let phishingResults = await Promise.resolve(queryPhishingDB(client, url));
-
-		let archiveDate = await Promise.resolve(getEarliestArchiveDate(url));
-
 		// Prepare a response to the client
 		let response = {
 			host: url.host,
 			pathname: url.pathname,
 			ip: ip,
-			phishingData: phishingResults,
-			subdomains: await Promise.resolve(fetchSubdomains(url)),
 			reverseDns: reverseDns,
-			geolocation: geolocation,
-			similarwebRank: similarwebRank,
-			archiveDate: archiveDate,
+			phishingData: await Promise.resolve(queryPhishingDB(client, url)),
+			subdomains: await Promise.resolve(fetchSubdomains(url)),
+			geolocation: await Promise.resolve(fetchGeolocation(ip.address)),
+			similarwebRank: await Promise.resolve(fetchSimilarwebRank(url)),
+			archiveDate: await Promise.resolve(getEarliestArchiveDate(url)),
 		};
 
 		// Write the respone to the client
