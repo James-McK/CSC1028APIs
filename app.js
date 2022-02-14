@@ -1,11 +1,11 @@
 import { MongoClient } from "mongodb";
 import createHttpServer from "./createHttpServer.js";
-import getRemoteJSON from "./queryRemoteJSON.js";
 import queryPhishingDB from "./queryMPhishDB.js";
 import getEarliestArchiveDate from "./queryArchiveDate.js";
 import dnsLookup from "./queryDNS.js";
 import fetchGeolocation from "./queryGeolocation.js";
 import fetchSimilarwebRank from "./querySimilarweb.js";
+import { fetchSubdomains, fetchReverseDns } from "./querySonar.js";
 
 // TODO: Better way to do this
 const uri = "mongodb://localhost:27017";
@@ -105,26 +105,6 @@ function tryParseUrl(urlStr) {
 			return null;
 		}
 	}
-}
-
-/**
- * Fetch subdomains of the given URL
- * @param {URL} url The URL to fetch information about
- * @returns {JSON} The subdomains of the given URL host
- */
-async function fetchSubdomains(url) {
-	const fetchUrl = "https://sonar.omnisint.io/subdomains/";
-	return await Promise.resolve(getRemoteJSON(fetchUrl + url.hostname));
-}
-
-/**
- * Fetch the reverse DNS of the given IP
- * @param {URL} url The URL to fetch information about
- * @returns {JSON} The result of the query
- */
-async function fetchReverseDns(ipAddress) {
-	const fetchUrl = "https://sonar.omnisint.io/reverse/";
-	return await Promise.resolve(getRemoteJSON(fetchUrl + ipAddress));
 }
 
 // Run the main function
