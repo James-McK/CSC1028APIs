@@ -1,12 +1,11 @@
 import { createServer } from "http";
 import { MongoClient } from "mongodb";
-import fs from "fs";
-import zlib from "zlib";
-import readline from "readline";
-import { lookup } from "dns";
 import getRemoteJSON from "./queryRemoteJSON.js";
 import queryPhishingDB from "./queryMPhishDB.js";
 import getEarliestArchiveDate from "./queryArchiveDate.js";
+import dnsLookup from "./queryDNS.js";
+import fetchGeolocation from "./queryGeolocation.js";
+import fetchSimilarwebRank from "./querySimilarweb.js";
 
 /**
  * Main function
@@ -75,38 +74,11 @@ async function createHttpServer(client) {
 						reverseDns = await Promise.resolve(fetchReverseDns(ip.address));
 					}
 
-					// Project Sonar data
-					if (reqDetails.isFullDetails) {
-						// queryProjectSonar(client, p);
-
-						//let arr = [];
-						const sonarDataLocation = "C:\\Users\\James\\Downloads\\fdns_a.json.gz";
-						let lineReader = readline.createInterface({
-							input: fs.createReadStream(sonarDataLocation).pipe(zlib.createGunzip()),
-						});
-
-						let n = 0;
-						lineReader.on("line", (sonarLine) => {
-							n += 1;
-							let sonarLineJson = JSON.parse(sonarLine);
-							//arr.push(sonarLineJson);
-							if (n % 1000000 === 0) {
-								console.log(n);
-								//console.log(arr);
-								//createManyListings(client, arr, "projectsonar");
-								//arr = [];
-							}
-							if (sonarLineJson.name === p.hostname || sonarLineJson.name.endsWith("." + p.hostname)) {
-								console.log(sonarLineJson);
-							}
-						});
-					}
-
 					// Location where the server is hosted
 					let geolocation = await Promise.resolve(fetchGeolocation(ip.address));
 
 					// SimilarWeb Rank
-					//let similarwebRank = await Promise.resolve(fetchSimilarwebRank(p));
+					let similarwebRank = await Promise.resolve(fetchSimilarwebRank(p));
 
 					// Could the URL contain malware/phishing attack?
 					let phishingResults = await Promise.resolve(queryPhishingDB(client, p));
@@ -122,7 +94,7 @@ async function createHttpServer(client) {
 						subdomains: await Promise.resolve(fetchSubdomains(p)),
 						reverseDns: reverseDns,
 						geolocation: geolocation,
-						//similarwebRank: similarwebRank,
+						similarwebRank: similarwebRank,
 						archiveDate: archiveDate,
 					};
 
@@ -151,69 +123,12 @@ function parseUserQuery(req) {
 		reqFullUrl = new URL(req.url, `http://${req.headers.host}`);
 		queriedUrl = reqFullUrl.searchParams.get("url");
 
-		let isFullDetails = false;
-		try {
-			isFullDetails = reqFullUrl.searchParams.get("fullDetails");
-		} catch {}
-
 		return {
 			queriedUrl: queriedUrl,
-			isFullDetails: isFullDetails,
 		};
 	} catch {
 		return null;
 	}
-}
-
-/**
- * Find the result of DNS for the given hostname
- * @param {string} hostname The hostname
- * @returns A promise containing the results of the DNS lookup
- */
-function dnsLookup(hostname) {
-	return new Promise(function (resolve) {
-		lookup(hostname, (err, address, family) => {
-			if (err) {
-				console.error(err);
-				resolve(null);
-			} else
-				resolve({
-					address: address,
-					family: family,
-				});
-		});
-	});
-}
-
-/**
- * Check if the given hostname has a match in the Project Sonar data
- * @param {MongoClient} client MongoClient with an open connection
- * @param {URL} url The URL to search for
- */
-async function queryProjectSonar(client, url) {
-	let result = await client.db("test_db").collection("projectsonar").findOne({ name: url.hostname });
-	console.log(result);
-}
-
-/**
- * Add the given JSON to the database
- * @param {MongoClient} client MongoClient with an open connection
- * @param {JSON[]} newListing The new data to be added
- * @param {string} collection Name of the collection to add the data to
- * @param {string} dbName Name of the database the collection is in
- */
-async function createManyListings(client, newListing, collection, dbName = "test_db") {
-	client.db(dbName).collection(collection).insertMany(newListing);
-}
-
-/**
- * Fetch geolocation information about the given IP
- * @param {URL} url The URL to fetch information about
- * @returns {JSON} The geolocation information on the given IP
- */
-async function fetchGeolocation(ipAddr) {
-	const fetchUrl = "http://ip-api.com/json/";
-	return await Promise.resolve(getRemoteJSON(fetchUrl + ipAddr));
 }
 
 /**
