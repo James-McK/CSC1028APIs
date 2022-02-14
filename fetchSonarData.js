@@ -24,10 +24,8 @@ async function main() {
 
 		await client.db("test_db").collection("sonardata").createIndex({ domainWithoutSuffix: "text" });
 
-		readFromFile(client);
-
-		//const dataUrl = "https://opendata.rapid7.com/sonar.fdns_v2/2022-01-28-1643328400-fdns_a.json.gz";
-		//readFromWeb(client, dataUrl);
+		const dataUrl = "https://opendata.rapid7.com/sonar.fdns_v2/2022-01-28-1643328400-fdns_a.json.gz";
+		readFromWeb(client, dataUrl);
 	} catch (e) {
 		console.error(e);
 	}
@@ -43,7 +41,7 @@ async function parseSonar(client, readstream) {
 
 	let arr = [];
 	let count = 0;
-	lineReader.on("line", async (line) => {
+	lineReader.on("line", (line) => {
 		let lineJson = JSON.parse(line);
 		let hostname = lineJson.name;
 		if (hostname.substring(0, 2) === "*.") hostname = hostname.substring(2);
@@ -56,7 +54,6 @@ async function parseSonar(client, readstream) {
 				domainWithoutSuffix: tldParsed.domainWithoutSuffix,
 				publicSuffix: tldParsed.publicSuffix,
 				subdomain: tldParsed.subdomain,
-				name: lineJson.name,
 				type: lineJson.type,
 				value: lineJson.value,
 			});
@@ -64,25 +61,8 @@ async function parseSonar(client, readstream) {
 				console.log(`${count} lines parsed`);
 				createManyListings(client, arr, "sonardata");
 				arr = [];
-				let memUsageMB = process.memoryUsage().rss / 1024 / 1024;
-				console.log(memUsageMB);
-				if (memUsageMB > 500) {
-					readstream.pause();
-					while (memUsageMB > 400) {
-						await sleep(1000);
-						memUsageMB = process.memoryUsage().rss / 1024 / 1024;
-						//console.log(memUsageMB);
-					}
-					readstream.resume();
-				}
 			}
 		}
-	});
-}
-
-function sleep(ms) {
-	return new Promise((resolve) => {
-		setTimeout(resolve, ms);
 	});
 }
 
@@ -98,7 +78,7 @@ async function createManyListings(client, newListing, collection, dbName = "test
 }
 
 async function readFromFile(client) {
-	const sonarDataLocation = "C:\\Users\\James\\Downloads\\fdns_a.json.gz";
+	const sonarDataLocation = "fdns_a.json.gz";
 	let stream = fs.createReadStream(sonarDataLocation);
 	parseSonar(client, stream);
 }
