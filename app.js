@@ -1,5 +1,5 @@
-import { createServer } from "http";
 import { MongoClient } from "mongodb";
+import createHttpServer from "./createHttpServer.js";
 import getRemoteJSON from "./queryRemoteJSON.js";
 import queryPhishingDB from "./queryMPhishDB.js";
 import getEarliestArchiveDate from "./queryArchiveDate.js";
@@ -7,19 +7,22 @@ import dnsLookup from "./queryDNS.js";
 import fetchGeolocation from "./queryGeolocation.js";
 import fetchSimilarwebRank from "./querySimilarweb.js";
 
+// TODO: Better way to do this
+const uri = "mongodb://localhost:27017";
+const client = new MongoClient(uri);
+
 /**
  * Main function
  */
 async function main() {
 	// Database is currently hosted on same machine
-	const uri = "mongodb://localhost:27017";
-	const client = new MongoClient(uri);
+
 	try {
 		// Connect to the MongoDB cluster
 		await client.connect();
 
 		// Start the HTTP server
-		await createHttpServer(client);
+		await createHttpServer(8080, mainQueryCallback);
 	} catch (e) {
 		// Log any errors
 		console.error(e);
@@ -29,105 +32,78 @@ async function main() {
 	}
 }
 
-/**
- * Create a HTTP server to respond to any requests
- * @param {MongoClient} client MongoClient with an open connection
- */
-async function createHttpServer(client) {
+async function mainQueryCallback(searchParams) {
+	const errorRes = { error: "No valid query!" };
 	const ipRegex =
 		/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/;
-	const errorRes = { error: "No valid query!" };
 
-	// Create a server object
-	createServer(async function (req, res) {
-		if (req.method === "GET") {
-			res.writeHead(200, {
-				// Send a HTTP 200 OK header,
-				"Content-Type": "application/json", // and tell the client the Content-Type is application/json
-				"X-Clacks-Overhead": "GNU Terry Pratchett", // GNU Terry Pratchett
-			});
+	// Parse it from a string to a URL object
+	let url = tryParseUrl(searchParams.url);
+	if (!url) {
+		console.log(`Cannot parse ${searchParams.url}!`);
+		return errorRes;
+	} else {
+		console.log(`Queried: ${url}`);
 
-			const reqDetails = parseUserQuery(req);
+		let ip;
+		let reverseDns;
 
-			// If any sort of queried url was given:
-			if (reqDetails) {
-				// Parse it from a string to a URL object
-				let p = tryParseUrl(reqDetails.queriedUrl);
-				if (!p) {
-					console.log(`Cannot parse ${reqDetails.queriedUrl}!`);
-					res.write(JSON.stringify(errorRes));
-				} else {
-					console.log(`Queried: ${p}`);
-
-					let ip;
-					let reverseDns;
-
-					// If hostname is already an IP address (TODO: Only supports IPv4)
-					if (ipRegex.test(p.hostname)) {
-						// Fetch the results of the reverse DNS
-						ip = { address: p.hostname, family: 4 };
-						reverseDns = await Promise.resolve(fetchReverseDns(ip.address));
-					} else {
-						// Find an IP address the hostname points to
-						ip = await Promise.resolve(dnsLookup(p.hostname));
-						// I don't know if it makes sense to call reverse dns here but I'm doing it anyway
-						reverseDns = await Promise.resolve(fetchReverseDns(ip.address));
-					}
-
-					// Location where the server is hosted
-					let geolocation = await Promise.resolve(fetchGeolocation(ip.address));
-
-					// SimilarWeb Rank
-					let similarwebRank = await Promise.resolve(fetchSimilarwebRank(p));
-
-					// Could the URL contain malware/phishing attack?
-					let phishingResults = await Promise.resolve(queryPhishingDB(client, p));
-
-					let archiveDate = await Promise.resolve(getEarliestArchiveDate(p));
-
-					// Prepare a response to the client
-					let response = {
-						host: p.host,
-						pathname: p.pathname,
-						ip: ip,
-						phishingData: phishingResults,
-						subdomains: await Promise.resolve(fetchSubdomains(p)),
-						reverseDns: reverseDns,
-						geolocation: geolocation,
-						similarwebRank: similarwebRank,
-						archiveDate: archiveDate,
-					};
-
-					// Write the respone to the client
-					res.write(JSON.stringify(response));
-				}
-			} else {
-				res.write(JSON.stringify(errorRes));
-			}
-			res.end(); // End the response
-		} else if (req.method === "POST") {
-			// I don't know what POST requests are yet, but given that browsers seem to use GET requests I'm ignoring POST for now.
+		// If hostname is already an IP address (TODO: Only supports IPv4)
+		if (ipRegex.test(url.hostname)) {
+			// Fetch the results of the reverse DNS
+			ip = { address: url.hostname, family: 4 };
+			reverseDns = await Promise.resolve(fetchReverseDns(ip.address));
+		} else {
+			// Find an IP address the hostname points to
+			ip = await Promise.resolve(dnsLookup(url.hostname));
+			// I don't know if it makes sense to call reverse dns here but I'm doing it anyway
+			reverseDns = await Promise.resolve(fetchReverseDns(ip.address));
 		}
-	}).listen(8080); // The server listens on port 8080
-}
-/**
- * Get the user's request
- * @param {IncomingMessage} req The user's request to the server
- * @returns The details of the user's query if given, else null
- */
-function parseUserQuery(req) {
-	// Try to parse the request to get the queried URL
-	let reqFullUrl;
-	let queriedUrl;
-	try {
-		reqFullUrl = new URL(req.url, `http://${req.headers.host}`);
-		queriedUrl = reqFullUrl.searchParams.get("url");
 
-		return {
-			queriedUrl: queriedUrl,
+		// Location where the server is hosted
+		let geolocation = await Promise.resolve(fetchGeolocation(ip.address));
+
+		// SimilarWeb Rank
+		let similarwebRank = await Promise.resolve(fetchSimilarwebRank(url));
+
+		// Could the URL contain malware/phishing attack?
+		let phishingResults = await Promise.resolve(queryPhishingDB(client, url));
+
+		let archiveDate = await Promise.resolve(getEarliestArchiveDate(url));
+
+		// Prepare a response to the client
+		let response = {
+			host: url.host,
+			pathname: url.pathname,
+			ip: ip,
+			phishingData: phishingResults,
+			subdomains: await Promise.resolve(fetchSubdomains(url)),
+			reverseDns: reverseDns,
+			geolocation: geolocation,
+			similarwebRank: similarwebRank,
+			archiveDate: archiveDate,
 		};
+
+		// Write the respone to the client
+		return response;
+	}
+}
+
+/**
+ * Try to parse the URL when it is unknown if the string contains the URL's protocol
+ * @param {string} urlStr The string to be parsed
+ * @returns {URL} The parsed result
+ */
+function tryParseUrl(urlStr) {
+	try {
+		return new URL(urlStr);
 	} catch {
-		return null;
+		try {
+			// Assume http if no protocol given
+			return new URL("https://" + urlStr);
+		} catch {
+			return null;
+		}
 	}
 }
 
@@ -149,24 +125,6 @@ async function fetchSubdomains(url) {
 async function fetchReverseDns(ipAddress) {
 	const fetchUrl = "https://sonar.omnisint.io/reverse/";
 	return await Promise.resolve(getRemoteJSON(fetchUrl + ipAddress));
-}
-
-/**
- * Try to parse the URL when it is unknown if the string contains the URL's protocol
- * @param {string} urlStr The string to be parsed
- * @returns {URL} The parsed result
- */
-function tryParseUrl(urlStr) {
-	try {
-		return new URL(urlStr);
-	} catch {
-		try {
-			// Assume http if no protocol given
-			return new URL("http://" + urlStr);
-		} catch {
-			return null;
-		}
-	}
 }
 
 // Run the main function
