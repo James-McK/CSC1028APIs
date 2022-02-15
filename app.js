@@ -5,6 +5,7 @@ import getEarliestArchiveDate from "./queryArchiveDate.js";
 import dnsLookup from "./queryDNS.js";
 import fetchGeolocation from "./queryGeolocation.js";
 import fetchSimilarwebRank from "./querySimilarweb.js";
+import tryParseUrl from "./tryParseUrl.js";
 import { fetchSubdomains, fetchReverseDns } from "./querySonar.js";
 
 // TODO: Better way to do this
@@ -73,24 +74,6 @@ async function mainQueryCallback(searchParams) {
 
 		// Write the respone to the client
 		return response;
-	}
-}
-
-/**
- * Try to parse the URL when it is unknown if the string contains the URL's protocol
- * @param {string} urlStr The string to be parsed
- * @returns {URL} The parsed result
- */
-function tryParseUrl(urlStr) {
-	try {
-		return new URL(urlStr);
-	} catch {
-		try {
-			// Assume http if no protocol given
-			return new URL("https://" + urlStr);
-		} catch {
-			return null;
-		}
 	}
 }
 

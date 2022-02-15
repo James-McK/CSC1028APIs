@@ -1,4 +1,5 @@
 import { lookup } from "dns";
+import createCli from "./createCli.js";
 
 /**
  * Find the result of DNS for the given hostname
@@ -19,3 +20,16 @@ export default function dnsLookup(hostname) {
 		});
 	});
 }
+
+/**
+ * Callback function if using the CLI
+ * @param {Array} args The arguments passed to the app
+ */
+async function cliCallback(args) {
+	args.forEach(async (value) => {
+		let res = await dnsLookup(value);
+		console.log(`${value}: ${JSON.stringify(res)}`);
+	});
+}
+
+createCli(import.meta, process.argv, cliCallback);
