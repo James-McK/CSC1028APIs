@@ -1,10 +1,10 @@
 import { MongoClient } from "mongodb";
 import createHttpServer from "./create/createHttpServer.js";
-import queryPhishingDB from "./queryMPhishDB.js";
-import getEarliestArchiveDate from "./queryArchiveDate.js";
-import dnsLookup from "./queryDNS.js";
-import fetchGeolocation from "./queryGeolocation.js";
-import fetchSimilarwebRank from "./querySimilarweb.js";
+import queryPhishingDB from "./query/queryMPhishDB.js";
+import getEarliestArchiveDate from "./query/queryArchiveDate.js";
+import dnsLookup from "./query/queryDNS.js";
+import fetchGeolocation from "./query/queryGeolocation.js";
+import fetchSimilarwebRank from "./query/querySimilarweb.js";
 import tryParseUrl from "./parse/tryParseUrl.js";
 import { fetchSubdomains, fetchReverseDns } from "./query/querySonar.js";
 
