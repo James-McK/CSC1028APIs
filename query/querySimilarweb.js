@@ -1,6 +1,6 @@
 import "dotenv/config";
 import getRemoteJSON from "./queryRemoteJSON.js";
-import tryParseUrl from "../parse/tryParseUrl.js";
+import parseHostname from "../parse/parseHostname.js";
 import createCli from "../create/createCli.js";
 
 /**
@@ -21,7 +21,7 @@ async function canQuerySimilarweb(logQueriesRemaining) {
  */
 export default async function fetchSimilarwebRank(url, logQueriesRemaining = true) {
 	if (await Promise.resolve(canQuerySimilarweb(logQueriesRemaining))) {
-		let parsed = tryParseUrl(url);
+		let parsed = parseHostname(url);
 		const fetchUrl = "https://api.similarweb.com/v1/similar-rank/" + parsed.hostname + "/rank?api_key=";
 		let res = await Promise.resolve(getRemoteJSON(fetchUrl + process.env.SIMILARWEB_KEY));
 
@@ -36,7 +36,7 @@ export default async function fetchSimilarwebRank(url, logQueriesRemaining = tru
  */
 async function cliCallback(args) {
 	args.forEach(async (value) => {
-		let url = tryParseUrl(value);
+		let url = parseHostname(value);
 		let res = await fetchSimilarwebRank(url, false);
 		console.log(`${value}: ${res}`);
 	});

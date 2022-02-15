@@ -1,6 +1,6 @@
 import { lookup } from "dns";
 import createCli from "../create/createCli.js";
-import tryParseUrl from "../parse/tryParseUrl.js";
+import parseHostname from "../parse/parseHostname.js";
 
 /**
  * Find the result of DNS for the given hostname
@@ -8,7 +8,7 @@ import tryParseUrl from "../parse/tryParseUrl.js";
  * @returns A promise containing the results of the DNS lookup
  */
 export default function dnsLookup(url) {
-	let parsed = tryParseUrl(url);
+	let parsed = parseHostname(url);
 
 	return new Promise(function (resolve) {
 		lookup(parsed.hostname, (err, address, family) => {

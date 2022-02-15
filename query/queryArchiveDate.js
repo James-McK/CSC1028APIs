@@ -1,5 +1,5 @@
 import getRemoteJSON from "./queryRemoteJSON.js";
-import tryParseUrl from "../parse/tryParseUrl.js";
+import parseHostname from "../parse/parseHostname.js";
 import createCli from "../create/createCli.js";
 
 /**
@@ -7,7 +7,7 @@ import createCli from "../create/createCli.js";
  * @returns {JSON} The subdomains of the given URL host
  */
 export default async function getEarliestArchiveDate(url) {
-	let parsed = tryParseUrl(url);
+	let parsed = parseHostname(url);
 
 	const fetchUrl = "https://archive.org/wayback/available?timestamp=0&url=";
 	let res = await Promise.resolve(getRemoteJSON(fetchUrl + parsed.hostname));
@@ -23,7 +23,7 @@ export default async function getEarliestArchiveDate(url) {
  */
 async function cliCallback(args) {
 	args.forEach(async (value) => {
-		let url = tryParseUrl(value);
+		let url = parseHostname(value);
 		let res = await getEarliestArchiveDate(url);
 		console.log(`${value}: ${res}`);
 	});

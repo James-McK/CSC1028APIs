@@ -1,4 +1,10 @@
-import tryParseUrl from "../parse/tryParseUrl.js";
+import parseHostname from "../parse/parseHostname.js";
+import esMain from "es-main";
+import { MongoClient } from "mongodb";
+
+// TODO: Better way to do this
+const uri = "mongodb://localhost:27017";
+const client = new MongoClient(uri);
 
 /**
  * Check if the given URL has a match in the given database's collection
@@ -89,7 +95,7 @@ async function queryMalwareDiscoverer(client, url) {
  * @returns The result of the given queries
  */
 export default async function queryPhishingDB(url) {
-	let parsed = tryParseUrl(url);
+	let parsed = parseHostname(url);
 	let results = [
 		await Promise.resolve(queryPhishtank(client, parsed)),
 		await Promise.resolve(queryOpenPhish(client, parsed)),
@@ -104,4 +110,8 @@ export default async function queryPhishingDB(url) {
 	}
 
 	return toReturn;
+}
+
+if (!esMain(import.meta)) {
+	await client.connect();
 }

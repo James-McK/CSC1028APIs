@@ -1,4 +1,5 @@
 import { createServer } from "http";
+import parseQuery from "../parse/parseUserQuery.js";
 
 /**
  * Create a HTTP server to respond to any requests
@@ -10,7 +11,7 @@ export default async function createHttpServer(port, callback) {
 	createServer(async function (req, res) {
 		if (req.method === "GET") {
 			// Parse the query to get the search parameters
-			let searchParams = parseUserQuery(req);
+			let parsedQuery = parseQuery(req);
 
 			// Send a HTTP 200 OK header,
 			res.writeHead(200, {
@@ -18,10 +19,10 @@ export default async function createHttpServer(port, callback) {
 				"X-Clacks-Overhead": "GNU Terry Pratchett", // GNU Terry Pratchett
 			});
 
-			if (searchParams) {
+			if (parsedQuery && parsedQuery.value) {
 				// Do something with the user's query
 				console.log("Calling back from http server");
-				let result = await callback(searchParams);
+				let result = await callback(parsedQuery.value);
 
 				if (result) {
 					// Write the respone to the client
