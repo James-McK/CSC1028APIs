@@ -1,12 +1,12 @@
 import { MongoClient } from "mongodb";
-import createHttpServer from "./createHttpServer.js";
+import createHttpServer from "./create/createHttpServer.js";
 import queryPhishingDB from "./queryMPhishDB.js";
 import getEarliestArchiveDate from "./queryArchiveDate.js";
 import dnsLookup from "./queryDNS.js";
 import fetchGeolocation from "./queryGeolocation.js";
 import fetchSimilarwebRank from "./querySimilarweb.js";
-import tryParseUrl from "./tryParseUrl.js";
-import { fetchSubdomains, fetchReverseDns } from "./querySonar.js";
+import tryParseUrl from "./parse/tryParseUrl.js";
+import { fetchSubdomains, fetchReverseDns } from "./query/querySonar.js";
 
 // TODO: Better way to do this
 const uri = "mongodb://localhost:27017";

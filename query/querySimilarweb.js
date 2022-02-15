@@ -1,7 +1,7 @@
 import "dotenv/config";
 import getRemoteJSON from "./queryRemoteJSON.js";
-import tryParseUrl from "./tryParseUrl.js";
-import createCli from "./createCli.js";
+import tryParseUrl from "../parse/tryParseUrl.js";
+import createCli from "../create/createCli.js";
 
 /**
  * Fetch if similarweb can still be queried
@@ -16,15 +16,16 @@ async function canQuerySimilarweb(logQueriesRemaining) {
 
 /**
  * The SimilarWeb rank of the given URL
- * @param {URL} url The URL to fetch information about
- * @returns {int} The website's rank, if found, or null if it cannot be found.
+ * @param {*} url The URL to fetch information about
+ * @returns {int} The website's rank, if found, or -1 if it cannot be found.
  */
 export default async function fetchSimilarwebRank(url, logQueriesRemaining = true) {
 	if (await Promise.resolve(canQuerySimilarweb(logQueriesRemaining))) {
-		const fetchUrl = "https://api.similarweb.com/v1/similar-rank/" + url.hostname + "/rank?api_key=";
+		let parsed = tryParseUrl(url);
+		const fetchUrl = "https://api.similarweb.com/v1/similar-rank/" + parsed.hostname + "/rank?api_key=";
 		let res = await Promise.resolve(getRemoteJSON(fetchUrl + process.env.SIMILARWEB_KEY));
 
-		if (res.meta.status === "Error") return null;
+		if (res.meta.status === "Error") return -1;
 		else return res.similar_rank.rank;
 	} else return null;
 }

@@ -20,10 +20,13 @@ export default async function createHttpServer(port, callback) {
 
 			if (searchParams) {
 				// Do something with the user's query
+				console.log("Calling back from http server");
 				let result = await callback(searchParams);
 
-				// Write the respone to the client
-				res.write(JSON.stringify(result));
+				if (result) {
+					// Write the respone to the client
+					res.write(JSON.stringify(result));
+				} else res.write(JSON.stringify(errorRes));
 			} else {
 				// No search parameters is currently considered an error
 				res.write(JSON.stringify(errorRes));

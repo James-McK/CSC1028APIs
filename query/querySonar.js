@@ -1,3 +1,4 @@
+import tryParseUrl from "../parse/tryParseUrl.js";
 import getRemoteJSON from "./queryRemoteJSON.js";
 
 /**
@@ -6,8 +7,9 @@ import getRemoteJSON from "./queryRemoteJSON.js";
  * @returns {JSON} The subdomains of the given URL host
  */
 async function fetchSubdomains(url) {
+	let parsed = tryParseUrl(url);
 	const fetchUrl = "https://sonar.omnisint.io/subdomains/";
-	return await Promise.resolve(getRemoteJSON(fetchUrl + url.hostname));
+	return await Promise.resolve(getRemoteJSON(fetchUrl + parsed.hostname));
 }
 
 /**

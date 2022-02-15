@@ -1,3 +1,5 @@
+import tryParseUrl from "../parse/tryParseUrl.js";
+
 /**
  * Check if the given URL has a match in the given database's collection
  * @param {MongoClient} client MongoClient with an open connection
@@ -86,12 +88,13 @@ async function queryMalwareDiscoverer(client, url) {
  * @param {URL} url The URL to search for
  * @returns The result of the given queries
  */
-export default async function queryPhishingDB(client, url) {
+export default async function queryPhishingDB(url) {
+	let parsed = tryParseUrl(url);
 	let results = [
-		await Promise.resolve(queryPhishtank(client, url)),
-		await Promise.resolve(queryOpenPhish(client, url)),
-		await Promise.resolve(queryUrlhaus(client, url)),
-		await Promise.resolve(queryMalwareDiscoverer(client, url)),
+		await Promise.resolve(queryPhishtank(client, parsed)),
+		await Promise.resolve(queryOpenPhish(client, parsed)),
+		await Promise.resolve(queryUrlhaus(client, parsed)),
+		await Promise.resolve(queryMalwareDiscoverer(client, parsed)),
 	];
 
 	// Only return results that exist
