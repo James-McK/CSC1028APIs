@@ -78,7 +78,9 @@ async function createManyListings(client, newListing, collection, dbName = "test
 }
 
 async function readFromFile(client) {
-	const sonarDataLocation = "/home/jamesm/Downloads/fdns_a.json.gz";
+	//const sonarDataLocation = "/home/jamesm/Downloads/fdns_a.json.gz";
+	const sonarDataLocation = "C:/Users/James/Downloads/fdns_a.json.gz";
+
 	let stream = fs.createReadStream(sonarDataLocation);
 	parseSonar(client, stream);
 }
