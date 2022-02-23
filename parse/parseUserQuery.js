@@ -7,7 +7,7 @@ export default function parseQuery(req) {
 	// Try to parse the request to get the queried URL
 	try {
 		let reqFullUrl = new URL(req.url, `https://${req.headers.host}`);
-		console.log(reqFullUrl);
+		//console.log(reqFullUrl);
 		let searchParams = {};
 
 		reqFullUrl.searchParams.forEach((value, key) => {
@@ -18,7 +18,7 @@ export default function parseQuery(req) {
 			value: parseHostname(reqFullUrl.pathname.substring(1)),
 			searchParams: searchParams,
 		};
-		console.log(res);
+		//console.log(res);
 		return res;
 	} catch {
 		return null;

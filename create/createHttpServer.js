@@ -4,7 +4,7 @@ import parseQuery from "../parse/parseUserQuery.js";
 /**
  * Create a HTTP server to respond to any requests
  */
-export default async function createHttpServer(port, callback) {
+export default async function createHttpServer(port, callback, extraOpts) {
 	const errorRes = { error: "No valid query!" };
 
 	// Create a server object
@@ -21,8 +21,7 @@ export default async function createHttpServer(port, callback) {
 
 			if (parsedQuery && parsedQuery.value) {
 				// Do something with the user's query
-				console.log("Calling back from http server");
-				let result = await callback(parsedQuery.value);
+				let result = await callback(parsedQuery.value, extraOpts);
 
 				if (result) {
 					// Write the respone to the client
