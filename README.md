@@ -12,7 +12,7 @@ The current data sources are:
 - A local MongoDB database containing data on phishing/malware URLs from [Phishtank](https://phishtank.org/), [OpenPhish](https://openphish.com/), [URLHaus](https://urlhaus.abuse.ch/) and [MalwareDiscoverer](https://malwarediscoverer.com/).
 - Earliest page/hostname archive date, from <https://archive.org>.
 - [Similarweb](https://www.similarweb.com/) global website rank
-- IP Geolocation data (Currently from <https://ip-api.com/>, could probably be improved - this section did not have much thought put into it.)
+- IP Geolocation data (Currently from <https://ip-api.com/>, could probably be improved - this section did not have much thought put into it, and was done more as a proof of concept)
 
 For more information on dealing with Project Sonar's data, see [my how-to guide](https://mck.is/project-sonar/), but in summary, the data is stored in a local MongoDB database which, when full, can fill up to 60gb. We then use [text indexes](https://docs.mongodb.com/manual/core/index-text/) to allow _extremely_ performant queries to be made.
 
@@ -28,3 +28,9 @@ To retreive the data used for the above HTTP APIs, some of the modules send a re
 ### Creating the HTTP APIs
 
 To create and manage the HTTP APIs, there is a single program (`createAllAPI.js`) that opens up all the APIs when run. This program does almost nothing itself, and imports functionality from other modules to create the APIs (Notably `createHTTPServer.js`, which will take any function and open up an API for it on the given port.). This approach allows new APIs to be added with ease, and allows you to manage which modules are started.
+
+### Running/developing the application
+
+For developing any of this project, you'll need a few things set up and installed. I'd reccommend following the setup process I used in [my how-to guide](https://mck.is/project-sonar/#setup). You'll also want to install the dependancies listed in `package.json` with `npm install <package_name>`.
+To actually get the data, you'll first want to run `./fetch/fetchMalwarePhishingData.js` and `./fetch/fetchMalwarePhishingData.js` (Assuming you've downloaded Project Sonar's data in a similar way as I did in my [how-to guide](https://mck.is/project-sonar/#parsing-a-local-copy-of-project-sonar)).  
+You can then run `node ./create/createAllAPI.js` to start the APIs.
