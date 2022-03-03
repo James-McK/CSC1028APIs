@@ -18,7 +18,7 @@ async function main() {
 
 	// Phishing DB
 	createHttpServer(10130, queryPhishingDB);
-	//Similarweb rank
+	// Similarweb rank
 	createHttpServer(10131, fetchSimilarwebRank); // TODO: Fails with wwww.npmjs.com but not npmjs.com!
 	// DNS Lookup
 	createHttpServer(10132, dnsLookup);
