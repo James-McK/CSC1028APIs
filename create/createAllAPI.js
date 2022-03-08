@@ -29,8 +29,8 @@ async function main() {
 	createHttpServer(10134, fetchGeolocation);
 	// Subdomains (Project Sonar)
 	createHttpServer(10135, fetchSubdomains, client);
-	// StackShare
-	createHttpServer(10136, queryStackShare);
+	// StackShare (Disabled by default due to limited number of API queries)
+	// createHttpServer(10136, queryStackShare);
 }
 
 // Run the main function
