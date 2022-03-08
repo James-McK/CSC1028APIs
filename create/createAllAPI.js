@@ -6,6 +6,7 @@ import dnsLookup from "../query/queryDNS.js";
 import fetchGeolocation from "../query/queryGeolocation.js";
 import fetchSimilarwebRank from "../query/querySimilarweb.js";
 import { fetchSubdomains } from "../query/querySonar.js";
+import queryStackShare from "../query/queryStackShare.js";
 
 /**
  * Main function
@@ -28,6 +29,8 @@ async function main() {
 	createHttpServer(10134, fetchGeolocation);
 	// Subdomains (Project Sonar)
 	createHttpServer(10135, fetchSubdomains, client);
+	// StackShare
+	createHttpServer(10136, queryStackShare);
 }
 
 // Run the main function
