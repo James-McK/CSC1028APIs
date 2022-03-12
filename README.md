@@ -8,11 +8,11 @@ See <https://mck.is/CSC1028> for further details.
 The main component of this project is a set of HTTP APIs that can be queried for information on a URL/IP address to provide information from various sources, from local databases to external APIs.
 The current data sources are:
 
-- A local MongoDB database containing data from Project Sonar
-- A local MongoDB database containing data on phishing/malware URLs from [Phishtank](https://phishtank.org/), [OpenPhish](https://openphish.com/), [URLHaus](https://urlhaus.abuse.ch/) and [MalwareDiscoverer](https://malwarediscoverer.com/).
-- Earliest page/hostname archive date, from <https://archive.org>.
-- [Similarweb](https://www.similarweb.com/) global website rank
-- IP Geolocation data (Currently from <https://ip-api.com/>, could probably be improved - this section did not have much thought put into it, and was done more as a proof of concept)
+-   A local MongoDB database containing data from Project Sonar
+-   A local MongoDB database containing data on phishing/malware URLs from [Phishtank](https://phishtank.org/), [OpenPhish](https://openphish.com/), [URLHaus](https://urlhaus.abuse.ch/) and [MalwareDiscoverer](https://malwarediscoverer.com/).
+-   Earliest page/hostname archive date, from <https://archive.org>.
+-   [Similarweb](https://www.similarweb.com/) global website rank
+-   IP Geolocation data (Currently from <https://ip-api.com/>, could probably be improved - this section did not have much thought put into it, and was done more as a proof of concept)
 
 For more information on dealing with Project Sonar's data, see [my how-to guide](https://mck.is/project-sonar/), but in summary, the data is stored in a local MongoDB database which, when full, can fill up to 60gb. We then use [text indexes](https://docs.mongodb.com/manual/core/index-text/) to allow _extremely_ performant queries to be made.
 
