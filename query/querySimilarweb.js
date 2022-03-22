@@ -9,8 +9,8 @@ import createCli from "../create/createCli.js";
  */
 async function canQuerySimilarweb(logQueriesRemaining) {
 	// The URL to query to find the number of queries remaining
-	const fetchUrl = "https://api.similarweb.com/user-capabilities?api_key=";
-	let res = await Promise.resolve(getRemoteJSON(fetchUrl + process.env.SIMILARWEB_KEY));
+	const fetchUrl = `https://api.similarweb.com/user-capabilities?api_key=${process.env.SIMILARWEB_KEY}`;
+	let res = await Promise.resolve(getRemoteJSON(fetchUrl));
 	// Log the number of remaining queries
 	if (logQueriesRemaining) console.log("Similarweb queries remaining: " + res.user_remaining);
 
