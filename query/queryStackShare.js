@@ -9,6 +9,9 @@ import createCli from "../create/createCli.js";
  * @returns {JSON} The subdomains of the given URL host
  */
 export default async function queryStackShare(url) {
+	// Can't query without an API key
+	if (!process.env.STACKSHARE_KEY) return null;
+
 	let parsed = parseHostname(url);
 
 	const postUrl = "https://api.stackshare.io/graphql";
