@@ -78,3 +78,16 @@ This is where the advantage of the application's modularity comes in. To see thi
 Again, at the top of the file, we're importing all the functions we need from other files (notably `import createHttpServer from "./createHttpServer.js";` and `import fetchSimilarwebRank from "../query/querySimilarweb.js";`). Then, in our main function, we can call the `createHttpServer` function we've just imported, and we pass it the port we want it to use, and the function we want to use. In this case we're using port 10131 (Picked because it is not used by any major applications, see <https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers>) and the `fetchSimilarwebRank` function. This `createHttpServer.js` allows us to add additional functionality on different ports with minimal effort, as it handles all of the networking side of the API, without this having to be re-architected for each additional function provided. You shouldn't even need to understand exactly what the `createHttpServer` function does to be able to use it, but if you do, the code is well commented.
 
 #### .env Files and API keys
+
+Since I can't just share my API keys for anybody to use, the application makes use of a `.env` file to store these. This allows these secret values to be stored in a file that is not publicly exposed.
+
+However, this means you will have to get your own API keys for the services that require them. Currently this is just similarweb and stackshare.  
+For getting a free similarweb API key (5000 requests per month), [see here](https://support.similarweb.com/hc/en-us/articles/4414317910929-Website-DigitalRank-API#UUID-b25b8106-20c9-2d5a-e7b2-cdee63a4eaa6_section-idm4621956633339232800133052352)  
+For getting a free stackshare API key (100 requests per month), [see here](https://www.stackshare.io/api)
+
+Once you've got the API keys you want, you can then create a `.env` file, using the provided `.env.template` file as a teplate. The result should look something like:
+
+```
+SIMILARWEB_KEY=abc1234
+STACKSHARE_KEY=abcd
+```
