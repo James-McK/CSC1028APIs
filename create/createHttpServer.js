@@ -37,24 +37,3 @@ export default async function createHttpServer(port, callback, extraOpts) {
 		}
 	}).listen(port); // The server listens on the given port
 }
-
-/**
- * Get the user's request
- * @param {IncomingMessage} req The user's request to the server
- * @returns The details of the user's query if given, or null if the request is invalid
- */
-function parseUserQuery(req) {
-	// Try to parse the request to get the queried URL
-	try {
-		let reqFullUrl = new URL(req.url, `https://${req.headers.host}`);
-		let searchParams = {};
-
-		reqFullUrl.searchParams.forEach((value, key, parent) => {
-			searchParams[key] = value;
-		});
-
-		return searchParams;
-	} catch {
-		return null;
-	}
-}
