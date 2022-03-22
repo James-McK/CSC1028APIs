@@ -1,22 +1,31 @@
 {
-	"name": "1028test",
-	"version": "1.0.0",
-	"description": "Test",
-	"type": "module",
-	"main": "app.js",
-	"scripts": {
-		"start": "node ./create/createAllAPI.js",
-		"test": "echo \"Error: no test specified\" && exit 1"
-	},
-	"author": "James McKee",
-	"license": "ISC",
-	"dependencies": {
-		"dotenv": "^14.3.2",
-		"es-main": "^1.0.2",
-		"graphql": "^16.3.0",
-		"graphql-request": "^4.1.0",
-		"mongodb": "^4.4.1",
-		"node-fetch": "^3.2.3",
-		"tldts-experimental": "^5.7.72"
-	}
+  "name": "csc1028apis",
+  "version": "1.0.0",
+  "description": "Test",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "node ./create/createAllAPI.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "James McKee",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^14.3.2",
+    "es-main": "^1.0.2",
+    "graphql": "^16.3.0",
+    "graphql-request": "^4.1.0",
+    "mongodb": "^4.4.1",
+    "node-fetch": "^3.2.3",
+    "tldts-experimental": "^5.7.72"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/James-McK/CSC1028.git"
+  },
+  "bugs": {
+    "url": "https://github.com/James-McK/CSC1028/issues"
+  },
+  "homepage": "https://github.com/James-McK/CSC1028#readme"
 }
