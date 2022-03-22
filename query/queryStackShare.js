@@ -4,6 +4,7 @@ import parseHostname from "../parse/parseHostname.js";
 import createCli from "../create/createCli.js";
 
 /**
+ * Query stackshare for the given hostname
  * @param {URL} url The URL to fetch information about
  * @returns {JSON} The subdomains of the given URL host
  */
@@ -11,6 +12,7 @@ export default async function queryStackShare(url) {
 	let parsed = parseHostname(url);
 
 	const postUrl = "https://api.stackshare.io/graphql";
+	// I don't understand graphql well enough to explain this
 	let query = gql`
 		query getData($hostname: String!, $results: Int!) {
 			enrichment(domain: $hostname) {
@@ -40,9 +42,10 @@ export default async function queryStackShare(url) {
 
 	let variables = {
 		hostname: parsed.hostname,
-		results: 10,
+		results: 10, // Number of results to get
 	};
 
+	// Fetch the result
 	return new Promise((resolve) => {
 		request({
 			url: postUrl,
@@ -61,8 +64,10 @@ export default async function queryStackShare(url) {
  */
 async function cliCallback(args) {
 	args.forEach(async (value) => {
+		// Parse the URL
 		let url = parseHostname(value);
 		let res = await getEarliestArchiveDate(url);
+		// Print the result
 		console.log(`${value}: ${res}`);
 	});
 }

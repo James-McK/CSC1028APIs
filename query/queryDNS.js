@@ -10,6 +10,7 @@ import parseHostname from "../parse/parseHostname.js";
 export default function dnsLookup(url) {
 	let parsed = parseHostname(url);
 
+	// Get the result of the DNS request and return it
 	return new Promise(function (resolve) {
 		lookup(parsed.hostname, (err, address, family) => {
 			if (err) {
@@ -31,6 +32,7 @@ export default function dnsLookup(url) {
 async function cliCallback(args) {
 	args.forEach(async (value) => {
 		let res = await dnsLookup(value);
+		// Print the result
 		console.log(`${value}: ${JSON.stringify(res)}`);
 	});
 }

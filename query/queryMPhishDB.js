@@ -27,10 +27,7 @@ async function queryCollection(client, url, collection, dbName = "test_db") {
 		} else {
 			// If the path does need checked:
 			// Check again if there is a matching hostname and pathname
-			result = await client
-				.db(dbName)
-				.collection(collection)
-				.findOne({ hostname: url.hostname, pathname: url.pathname });
+			result = await client.db(dbName).collection(collection).findOne({ hostname: url.hostname, pathname: url.pathname });
 
 			//If a result is found:
 			if (result) {
@@ -95,7 +92,10 @@ async function queryMalwareDiscoverer(client, url) {
  * @returns The result of the given queries
  */
 export default async function queryPhishingDB(url) {
+	// Parse the URL
 	let parsed = parseHostname(url);
+
+	// Query all the sources
 	let results = [
 		await Promise.resolve(queryPhishtank(client, parsed)),
 		await Promise.resolve(queryOpenPhish(client, parsed)),

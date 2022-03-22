@@ -6,7 +6,10 @@ import fetch from "node-fetch";
  * @returns {JSON} The parsed JSON to be used elsewhere
  */
 export default async function getRemoteJSON(url, settings = { method: "GET" }) {
+	// Fetch the given URL
 	let res = await fetch(url, settings);
+	// Get the JSON
 	let json = await res.json();
+	// Return the result
 	return json;
 }

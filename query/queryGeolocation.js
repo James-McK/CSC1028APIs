@@ -8,7 +8,8 @@ import getRemoteJSON from "./queryRemoteJSON.js";
 export default async function fetchGeolocation(ipAddr) {
 	let ip = ipAddr;
 	if (ip.ip) ip = ip.ip;
-	console.log(ip);
-	const fetchUrl = "http://ip-api.com/json/";
-	return await Promise.resolve(getRemoteJSON(fetchUrl + ip));
+	// Construct the URL to query
+	const fetchUrl = `http://ip-api.com/json/${ip}`;
+	// Return the result
+	return await Promise.resolve(getRemoteJSON(fetchUrl));
 }
