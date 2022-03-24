@@ -30,6 +30,10 @@ export default async function fetchSimilarwebRank(url, logQueriesRemaining = tru
 	if (await Promise.resolve(canQuerySimilarweb(logQueriesRemaining))) {
 		// Parse the URL
 		let parsed = parseHostname(url);
+
+		// If the hostname begins with `www.`, remove it - similarweb's api is fussy and doesn't like it otherwise
+		if (parsed.hostname.startsWith("www.")) parsed.hostname = parsed.hostname.substring(4);
+
 		// Construct the URL to query
 		const fetchUrl = `https://api.similarweb.com/v1/similar-rank/${parsed.hostname}/rank?api_key=${process.env.SIMILARWEB_KEY}`;
 

@@ -20,9 +20,6 @@ async function main() {
 	// Phishing DB
 	createHttpServer(10130, queryPhishingDB);
 	// Similarweb rank
-	// Note: Fails with wwww.npmjs.com but not npmjs.com
-	// This is more an issue with Similarweb's API rather than this application,
-	// But we should still probably try to work around this limitation
 	createHttpServer(10131, fetchSimilarwebRank);
 	// DNS Lookup
 	createHttpServer(10132, dnsLookup);
