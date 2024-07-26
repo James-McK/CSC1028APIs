@@ -4,7 +4,7 @@ See <https://mck.is/CSC1028> for further details.
 
 ## HTTP APIs
 
-[GitHub](https://github.com/James-McK/CSC1028APIs)  
+[GitHub](https://github.com/autumn-mck/CSC1028APIs)  
 The main component of this project is a set of HTTP APIs that can be queried for information on a URL/IP address to provide information from various sources, from local databases to external APIs.
 The current data sources are:
 
@@ -44,7 +44,7 @@ I've found that the best way to debug it is to make thorough use of `console.log
 
 ### Further development
 
-I've tried to make adding additional functionality to the API as easy as possible. All APIs are set up in the `createAllAPI.js` file, which itself contains very little code, and as a whole, the application is developed very modularly. As an example, we'll cover how querying similarweb works, as it has more requirements to get working than other functions. (You can view all the code for this [here](https://github.com/James-McK/CSC1028APIs/blob/master/query/querySimilarweb.js))
+I've tried to make adding additional functionality to the API as easy as possible. All APIs are set up in the `createAllAPI.js` file, which itself contains very little code, and as a whole, the application is developed very modularly. As an example, we'll cover how querying similarweb works, as it has more requirements to get working than other functions. (You can view all the code for this [here](https://github.com/-McK/CSC1028APIs/blob/master/query/querySimilarweb.js))
 
 All query functions are stored in the `create` folder, and our function for querying similarweb is stored in `querySimilarweb.js`. At the top of the file, we begin by importing any other modules or functions we'll need.
 
